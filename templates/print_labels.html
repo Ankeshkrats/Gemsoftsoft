@@ -40,35 +40,35 @@
 <body class="bg-gray-200 min-h-screen">
 
   <!-- Screen Toolbar -->
-  <div class="no-print bg-[#1e3a5f] text-white px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-lg">
-    <div class="flex items-center gap-3">
-      <a href="/dashboard" class="text-blue-300 hover:text-white text-sm">← Dashboard</a>
+  <div class="no-print bg-[#1e3a5f] text-white px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20 shadow-lg">
+    <div class="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+      <a href="/dashboard" class="text-blue-300 hover:text-white transition flex items-center gap-1 font-medium py-1">← Dashboard</a>
       <span class="text-white/30">|</span>
-      <span class="text-[#c9a84c] text-sm">ID Cards: {{ cert.report_number }}</span>
+      <span class="text-[#c9a84c] font-mono font-medium">ID Cards: {{ cert.report_number }}</span>
     </div>
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
       <a href="/certificate/{{ cert.id }}"
-        class="text-sm bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded transition">
+        class="flex-1 sm:flex-initial text-center text-xs sm:text-sm bg-white/10 hover:bg-white/20 text-white px-3 sm:px-4 py-2 rounded-lg font-medium transition min-h-[38px] flex items-center justify-center">
         View Certificate
       </a>
       <button onclick="window.print()"
-        class="text-sm bg-[#c9a84c] text-[#1e3a5f] hover:bg-[#b8963e] px-4 py-1.5 rounded font-bold transition">
+        class="flex-1 sm:flex-initial text-center text-xs sm:text-sm bg-[#c9a84c] text-[#1e3a5f] hover:bg-[#b8963e] px-3 sm:px-4 py-2 rounded-lg font-bold transition shadow-sm min-h-[38px] flex items-center justify-center">
         🖨️ Print Card(s)
       </button>
     </div>
   </div>
 
   <!-- Cards Grid -->
-  <div class="py-8 px-8 print-area" id="label-print-area">
-    <div class="no-print mb-6">
-      <h2 class="text-xl font-bold text-gray-700">Gemstone ID Cards</h2>
-      <p class="text-sm text-gray-500 mt-1">
+  <div class="py-4 sm:py-8 px-3 sm:px-8 print-area" id="label-print-area">
+    <div class="no-print mb-4 sm:mb-6">
+      <h2 class="text-lg sm:text-xl font-bold text-gray-700">Gemstone ID Cards</h2>
+      <p class="text-xs sm:text-sm text-gray-500 mt-1">
         Printing {{ certs|length }} card{% if certs|length != 1 %}s{% endif %} · ATM size (85.6 × 54 mm) · 2 per row.
         Click "Print Card(s)" to send to printer.
       </p>
     </div>
 
-    <div class="label-print-grid flex flex-wrap gap-4 justify-start">
+    <div class="label-print-grid flex flex-wrap gap-4 justify-center sm:justify-start">
       {% for c in certs %}
       <div class="label-card">
 

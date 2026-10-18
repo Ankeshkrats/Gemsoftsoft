@@ -326,28 +326,28 @@ function renderVerifyResult(data, container) {
   <div class="fade-in bg-white rounded-2xl shadow-2xl overflow-hidden border-2 border-emerald-500/30 relative">
     <!-- Centered Background Watermark Logo -->
     <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
-      <img src="/static/logo.jpeg" alt="" class="w-72 h-72 md:w-80 md:h-80 object-contain rounded-full opacity-[0.07] select-none" onerror="this.style.display='none'"/>
+      <img src="/static/logo.jpeg" alt="" class="w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 object-contain rounded-full opacity-[0.07] select-none" onerror="this.style.display='none'"/>
     </div>
 
-    <div class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between px-6 py-4 relative z-10">
+    <div class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 gap-2.5 relative z-10">
       <div class="flex items-center gap-3">
-        <span class="text-3xl">✅</span>
+        <span class="text-2xl sm:text-3xl">✅</span>
         <div>
-          <h3 class="text-lg font-bold">Certificate Found — Online Verified</h3>
+          <h3 class="text-base sm:text-lg font-bold">Certificate Found — Online Verified</h3>
           <p class="text-xs text-emerald-100">Issued by ${data.institute || 'Indian Gemological Institute'}</p>
         </div>
       </div>
-      <span class="bg-white/20 backdrop-blur-sm text-white text-xs px-3.5 py-1.5 rounded-full font-bold uppercase tracking-wider shadow-inner">
+      <span class="self-start sm:self-auto bg-white/20 backdrop-blur-sm text-white text-[11px] sm:text-xs px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full font-bold uppercase tracking-wider shadow-inner">
         ✔ Verified
       </span>
     </div>
-    <div class="p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-      <div class="md:col-span-2 space-y-3">
-        <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+    <div class="p-4 sm:p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+      <div class="md:col-span-2 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5 text-sm">
           ${row('Report No.', data.report_number)}
           ${row('Customer', data.customer_name)}
           ${row('Gemstone', data.gemstone_name)}
-          ${row('Weight', data.weight_carat + ' ct')}
+          ${row('Weight', data.weight_carat ? data.weight_carat + ' ct' : '')}
           ${row('Shape / Cut', data.shape_cut)}
           ${row('Color', data.color)}
           ${row('Refractive Index', data.refractive_index)}
@@ -355,22 +355,22 @@ function renderVerifyResult(data, container) {
           ${row('Hardness', data.hardness ? data.hardness + ' (Mohs)' : '')}
           ${row('Chemical Formula', data.chemical_formula)}
           ${row('Crystal System', data.crystal_system)}
-          ${row('Issued On', data.created_at)}
+          ${row('Issued On', data.created_at ? data.created_at.slice(0, 10) : '')}
           ${row('Institute', data.institute || 'Indian Gemological Institute')}
         </div>
-        ${data.comments ? `<div class="bg-gray-50 rounded p-3 text-sm"><strong>Comments:</strong> ${data.comments}</div>` : ''}
+        ${data.comments ? `<div class="bg-amber-50 border border-amber-200 rounded-xl p-3 sm:p-3.5 text-xs sm:text-sm text-amber-900"><strong class="text-amber-800">Gemologist's Remarks:</strong> ${data.comments}</div>` : ''}
       </div>
-      <div class="flex flex-col items-center gap-3">
-        ${data.image_url ? `<img src="${data.image_url}" class="w-40 h-40 object-cover rounded-lg border-2 border-gray-200 shadow" alt="Gemstone">` : ''}
-        ${data.qr_url ? `<img src="${data.qr_url}" class="w-28 h-28" alt="QR Code">` : ''}
-        <p class="text-xs text-gray-400 text-center">For cryptographic offline verification, use the QR payload in the Offline tab.</p>
+      <div class="w-full flex flex-col sm:flex-row md:flex-col items-center justify-center gap-4 bg-slate-50 rounded-xl p-4 border border-slate-200">
+        ${data.image_url ? `<img src="${data.image_url}" class="w-36 h-36 sm:w-40 sm:h-40 object-cover rounded-xl border-2 border-white shadow-md" alt="Gemstone">` : ''}
+        ${data.qr_url ? `<div class="text-center"><img src="${data.qr_url}" class="w-24 h-24 p-1 bg-white border border-gray-200 rounded-lg shadow-sm mx-auto" alt="QR Code"><span class="text-[10px] text-gray-400 font-mono mt-1 block">${data.report_number || ''}</span></div>` : ''}
+        <p class="text-[11px] text-gray-400 text-center">For cryptographic offline verification, use the QR payload in the Offline tab.</p>
       </div>
     </div>
   </div>`;
 }
 
 function row(label, value) {
-  return `<div class="font-semibold text-gray-600">${label}:</div><div class="text-gray-900">${value || '—'}</div>`;
+  return `<div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0"><span class="font-semibold text-gray-500">${label}:</span> <span class="text-gray-900 font-medium block sm:inline">${value || '—'}</span></div>`;
 }
 
 /* =====================================================
@@ -422,7 +422,7 @@ function renderOfflineResult(data, container) {
   }
 
   const fields = data.status === 'VALID' ? `
-    <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5 text-sm">
       ${row('Certificate No.', data.cert_no)}
       ${row('Institute', data.inst)}
       ${row('Gemstone', data.gem)}
@@ -441,7 +441,7 @@ function renderOfflineResult(data, container) {
     </div>` : (data.reason ? `<p class="mt-3 text-sm text-gray-600">${data.reason}</p>` : '');
 
   container.innerHTML = `
-  <div class="fade-in bg-white rounded-2xl shadow-2xl p-6">
+  <div class="fade-in bg-white rounded-2xl shadow-2xl p-4 sm:p-6">
     <div class="${statusClass}">${statusHTML}</div>
     ${fields}
   </div>`;
@@ -603,4 +603,38 @@ document.addEventListener('DOMContentLoaded', () => {
   if (sel && otherWrap && sel.value === '__other__') {
     otherWrap.style.display = 'block';
   }
+
+  // Mobile sidebar drawer event listeners
+  document.getElementById('sidebar-backdrop')?.addEventListener('click', () => toggleMobileSidebar(false));
+  document.getElementById('sidebar-close-btn')?.addEventListener('click', () => toggleMobileSidebar(false));
+  document.getElementById('mobile-menu-btn')?.addEventListener('click', () => toggleMobileSidebar(true));
+
+  document.querySelectorAll('#sidebar .nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth < 1024) toggleMobileSidebar(false);
+    });
+  });
 });
+
+/* =====================================================
+   13. MOBILE SIDEBAR DRAWER TOGGLE
+   ===================================================== */
+function toggleMobileSidebar(shouldOpen) {
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  if (!sidebar) return;
+
+  const isClosed = sidebar.classList.contains('-translate-x-full');
+  const open = (typeof shouldOpen === 'boolean') ? shouldOpen : isClosed;
+
+  if (open) {
+    sidebar.classList.remove('-translate-x-full');
+    backdrop?.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden', 'lg:overflow-auto');
+  } else {
+    sidebar.classList.add('-translate-x-full');
+    backdrop?.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden', 'lg:overflow-auto');
+  }
+}
+

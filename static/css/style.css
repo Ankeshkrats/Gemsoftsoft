@@ -375,3 +375,65 @@
   padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 13px;
   display: inline-flex; align-items: center; gap: 8px;
 }
+
+/* ── Mobile Responsive Enhancements (Screen Only) ── */
+@media screen {
+  /* Prevent iOS Safari / Android WebView auto-zoom on input focus */
+  @media (max-width: 640px) {
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    input[type="number"],
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  /* Table horizontal scrolling container */
+  .responsive-table-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 0.75rem;
+  }
+
+  /* Screen wrapper for 210mm Certificate page */
+  .cert-screen-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    justify-content: center;
+    padding: 1.5rem 0.5rem;
+  }
+
+  @media (max-width: 820px) {
+    .cert-screen-wrapper {
+      justify-content: flex-start;
+      padding: 1rem 0.25rem;
+    }
+  }
+
+  /* Mobile scroll hint indicator */
+  .scroll-hint {
+    display: none;
+  }
+  @media (max-width: 768px) {
+    .scroll-hint {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  /* Mobile drawer backdrop */
+  .mobile-drawer-backdrop {
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(2px);
+  }
+}
+

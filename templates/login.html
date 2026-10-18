@@ -41,7 +41,7 @@
     }
   </style>
 </head>
-<body class="flex items-center justify-center p-4 relative overflow-x-hidden">
+<body class="flex items-center justify-center p-3 sm:p-4 relative overflow-x-hidden min-h-screen">
 
   <!-- Ambient gemological background particles -->
   <div class="gem-particle bg-yellow-400 w-32 h-32" style="top:8%;left:6%;animation-delay:0s"></div>
@@ -49,32 +49,32 @@
   <div class="gem-particle bg-amber-300 w-28 h-28" style="top:15%;right:8%;animation-delay:1s"></div>
   <div class="gem-particle bg-cyan-400 w-20 h-20" style="bottom:12%;right:10%;animation-delay:3s"></div>
 
-  <div class="relative z-10 w-full max-w-md my-8">
+  <div class="relative z-10 w-full max-w-md my-4 sm:my-8 mx-auto">
 
     <!-- Card -->
     <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-100">
 
       <!-- Institute Header -->
-      <div class="bg-gradient-to-r from-[#1e3a5f] to-[#0f2040] px-8 py-6 text-center text-white relative">
+      <div class="bg-gradient-to-r from-[#1e3a5f] to-[#0f2040] px-4 sm:px-8 py-5 sm:py-6 text-center text-white relative">
         <div class="flex items-center justify-center gap-3.5 mb-2">
           <img src="/static/logo.jpeg"
                alt="IGI Logo"
-               class="h-14 w-14 rounded-full object-cover border-2 border-[#c9a84c]/80 shadow-md"
+               class="h-12 w-12 sm:h-14 sm:w-14 rounded-full object-cover border-2 border-[#c9a84c]/80 shadow-md flex-shrink-0"
                onerror="this.style.display='none'"/>
           <div class="text-left">
-            <h1 class="text-lg font-bold text-[#c9a84c] tracking-wide leading-tight">Indian Gemological</h1>
-            <h1 class="text-lg font-bold text-white tracking-wide leading-tight">Institute</h1>
+            <h1 class="text-base sm:text-lg font-bold text-[#c9a84c] tracking-wide leading-tight">Indian Gemological</h1>
+            <h1 class="text-base sm:text-lg font-bold text-white tracking-wide leading-tight">Institute</h1>
           </div>
         </div>
-        <p class="text-blue-200 text-xs tracking-widest uppercase font-medium">Laboratory Testing &amp; Certification System</p>
+        <p class="text-blue-200 text-[11px] sm:text-xs tracking-widest uppercase font-medium">Laboratory Testing &amp; Certification System</p>
       </div>
 
       <!-- Navigation Tabs -->
-      <div class="flex border-b border-gray-200 bg-slate-100 font-semibold text-sm">
+      <div class="flex border-b border-gray-200 bg-slate-100 font-semibold text-xs sm:text-sm">
         <button type="button" 
                 id="tab-btn-login" 
                 onclick="switchTab('login')" 
-                class="auth-tab-btn flex-1 py-3.5 text-center flex items-center justify-center gap-2 cursor-pointer {% if active_tab != 'register' %}active{% endif %}">
+                class="auth-tab-btn flex-1 py-3 sm:py-3.5 text-center flex items-center justify-center gap-2 cursor-pointer {% if active_tab != 'register' %}active{% endif %}">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
           </svg>
@@ -83,7 +83,7 @@
         <button type="button" 
                 id="tab-btn-register" 
                 onclick="switchTab('register')" 
-                class="auth-tab-btn flex-1 py-3.5 text-center flex items-center justify-center gap-2 cursor-pointer {% if active_tab == 'register' %}active{% endif %}">
+                class="auth-tab-btn flex-1 py-3 sm:py-3.5 text-center flex items-center justify-center gap-2 cursor-pointer {% if active_tab == 'register' %}active{% endif %}">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
           </svg>
@@ -92,7 +92,7 @@
       </div>
 
       <!-- Content Area -->
-      <div class="px-8 py-6">
+      <div class="px-4 sm:px-8 py-5 sm:py-6">
 
         <!-- Flash messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -137,7 +137,7 @@
                        value="{{ login_identifier or '' }}" 
                        required 
                        autofocus
-                       class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent text-sm transition"
+                       class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent text-base sm:text-sm transition"
                        placeholder="e.g. gemologist or lab@example.com"/>
               </div>
             </div>
@@ -156,11 +156,12 @@
                        id="login-pwd" 
                        name="password" 
                        required
-                       class="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent text-sm transition"
+                       class="w-full pl-10 pr-11 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent text-base sm:text-sm transition"
                        placeholder="Enter your password"/>
                 <button type="button" 
                         onclick="togglePwdVisibility('login-pwd', 'login-eye')"
-                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                        class="absolute inset-y-0 right-0 w-11 flex items-center justify-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                        aria-label="Toggle password visibility">
                   <svg id="login-eye" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -177,7 +178,7 @@
             </div>
 
             <button type="submit"
-                    class="w-full bg-[#1e3a5f] hover:bg-[#162d4d] text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm tracking-wide mt-2">
+                    class="w-full bg-[#1e3a5f] hover:bg-[#162d4d] text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm tracking-wide mt-2 min-h-[44px]">
               <span>Sign In to Laboratory</span>
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
@@ -216,7 +217,7 @@
                        name="full_name" 
                        value="{{ reg_name or '' }}" 
                        required 
-                       class="w-full pl-9 pr-3.5 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-sm"
+                       class="w-full pl-9 pr-3.5 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-base sm:text-sm"
                        placeholder="e.g. Dr. Arthur Gemologist"/>
               </div>
             </div>
@@ -236,7 +237,7 @@
                        name="username" 
                        value="{{ reg_username or '' }}" 
                        required 
-                       class="w-full pl-9 pr-3.5 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-sm"
+                       class="w-full pl-9 pr-3.5 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-base sm:text-sm"
                        placeholder="Choose a username"/>
               </div>
             </div>
@@ -255,7 +256,7 @@
                        id="reg-email" 
                        name="email" 
                        value="{{ reg_email or '' }}" 
-                       class="w-full pl-9 pr-3.5 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-sm"
+                       class="w-full pl-9 pr-3.5 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-base sm:text-sm"
                        placeholder="gemologist@example.com"/>
               </div>
             </div>
@@ -275,11 +276,12 @@
                        name="password" 
                        required 
                        minlength="6"
-                       class="w-full pl-9 pr-9 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-sm"
+                       class="w-full pl-9 pr-11 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-base sm:text-sm"
                        placeholder="At least 6 characters"/>
                 <button type="button" 
                         onclick="togglePwdVisibility('reg-pwd', 'reg-eye-1')"
-                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                        class="absolute inset-y-0 right-0 w-11 flex items-center justify-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                        aria-label="Toggle password visibility">
                   <svg id="reg-eye-1" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -303,11 +305,12 @@
                        name="confirm_password" 
                        required 
                        minlength="6"
-                       class="w-full pl-9 pr-9 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-sm"
+                       class="w-full pl-9 pr-11 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-base sm:text-sm"
                        placeholder="Re-enter password"/>
                 <button type="button" 
                         onclick="togglePwdVisibility('reg-confirm-pwd', 'reg-eye-2')"
-                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                        class="absolute inset-y-0 right-0 w-11 flex items-center justify-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                        aria-label="Toggle password visibility">
                   <svg id="reg-eye-2" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -318,7 +321,7 @@
             </div>
 
             <button type="submit"
-                    class="w-full bg-[#c9a84c] hover:bg-[#b8963e] text-slate-900 font-bold py-2.5 px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm tracking-wide mt-3">
+                    class="w-full bg-[#c9a84c] hover:bg-[#b8963e] text-slate-900 font-bold py-3 px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm tracking-wide mt-3 min-h-[44px]">
               <span>Create Account &amp; Sign In</span>
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -339,9 +342,9 @@
       </div>
 
       <!-- Footer: Public Verification -->
-      <div class="bg-slate-50 px-8 py-3.5 border-t border-gray-100 flex items-center justify-between">
+      <div class="bg-slate-50 px-4 sm:px-8 py-3.5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
         <a href="/verify" class="inline-flex items-center gap-1.5 text-xs text-[#1e3a5f] hover:text-[#c9a84c] font-semibold transition">
-          <svg class="w-4 h-4 text-[#c9a84c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 text-[#c9a84c] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
           </svg>
           Public Certificate Verification

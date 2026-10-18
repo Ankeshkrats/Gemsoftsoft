@@ -21,116 +21,140 @@
   </div>
 
   <!-- Header -->
-  <header class="bg-white/10 backdrop-blur-sm border-b border-white/10 px-6 py-4 relative z-10">
-    <div class="max-w-4xl mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-4">
+  <header class="bg-white/10 backdrop-blur-sm border-b border-white/10 px-4 sm:px-6 py-3 sm:py-4 relative z-10">
+    <div class="max-w-4xl mx-auto flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 sm:gap-4 min-w-0">
         <img src="/static/logo.jpeg"
              alt="{{ institute or 'Indian Gemological Institute' }}"
-             class="h-12 w-12 rounded-full object-cover border-2 border-[#c9a84c]/50"
+             class="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover border-2 border-[#c9a84c]/50 flex-shrink-0"
              onerror="this.style.display='none'"/>
-        <div>
-          <h1 class="text-lg font-bold text-[#c9a84c] tracking-wide leading-tight">{{ institute or 'Indian Gemological Institute' }}</h1>
-          <p class="text-xs text-blue-300">Public Certificate Verification Portal</p>
+        <div class="min-w-0">
+          <h1 class="text-sm sm:text-lg font-bold text-[#c9a84c] tracking-wide leading-tight truncate">{{ institute or 'Indian Gemological Institute' }}</h1>
+          <p class="text-[11px] sm:text-xs text-blue-300 truncate">Public Certificate Verification Portal</p>
         </div>
       </div>
-      <a href="/login" class="text-xs text-blue-300 hover:text-white transition border border-white/20 px-3 py-1.5 rounded">
+      <a href="/login" class="text-xs text-blue-300 hover:text-white transition border border-white/20 px-3 py-1.5 rounded flex-shrink-0">
         🔒 Lab Login
       </a>
     </div>
   </header>
 
   <!-- Main -->
-  <main class="max-w-4xl mx-auto px-4 py-10 relative z-10">
+  <main class="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-10 relative z-10">
 
     <!-- Hero -->
-    <div class="text-center mb-8">
-      <h2 class="text-3xl font-bold text-white mb-2">Gemstone Certificate Verification</h2>
-      <p class="text-blue-200 text-sm max-w-lg mx-auto">
+    <div class="text-center mb-6 sm:mb-8">
+      <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2 leading-tight">Gemstone Certificate Verification</h2>
+      <p class="text-blue-200 text-xs sm:text-sm max-w-lg mx-auto">
         Verify the authentic grading and specifications of any gemstone report by scanning its QR code
         or entering the Report Number below.
       </p>
     </div>
 
     <!-- Live Verified Certificate Banner & Card (Server-Rendered for Instant Visibility upon QR Scan) -->
-    <div id="verify-result" class="mb-8">
+    <div id="verify-result" class="mb-6 sm:mb-8">
       {% if cert %}
       <div class="fade-in bg-white rounded-2xl shadow-2xl overflow-hidden border-2 border-emerald-500/30 relative">
         <!-- Centered Card Background Logo Watermark -->
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
           <img src="/static/logo.jpeg"
                alt=""
-               class="w-72 h-72 md:w-80 md:h-80 object-contain rounded-full opacity-[0.07] select-none"
+               class="w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 object-contain rounded-full opacity-[0.07] select-none"
                onerror="this.style.display='none'"/>
         </div>
 
         <!-- Status Header -->
-        <div class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between px-6 py-4 relative z-10">
+        <div class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 gap-2.5 relative z-10">
           <div class="flex items-center gap-3">
-            <span class="text-3xl">✅</span>
+            <span class="text-2xl sm:text-3xl">✅</span>
             <div>
-              <h3 class="text-lg font-bold">Certificate Verified — Authentic Record</h3>
+              <h3 class="text-base sm:text-lg font-bold">Certificate Verified — Authentic Record</h3>
               <p class="text-xs text-emerald-100">Issued & Certified by {{ institute }}</p>
             </div>
           </div>
-          <span class="bg-white/20 backdrop-blur-sm text-white text-xs px-3.5 py-1.5 rounded-full font-bold uppercase tracking-wider shadow-inner">
+          <span class="self-start sm:self-auto bg-white/20 backdrop-blur-sm text-white text-[11px] sm:text-xs px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full font-bold uppercase tracking-wider shadow-inner">
             ✔ Official Record
           </span>
         </div>
 
         <!-- Certificate Details Grid -->
-        <div class="p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+        <div class="p-4 sm:p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
           <div class="md:col-span-2 space-y-4">
-            <div class="grid grid-cols-2 gap-x-4 gap-y-2.5 text-sm">
-              <div class="font-semibold text-gray-500">Report Number:</div>
-              <div class="font-mono font-bold text-[#1e3a5f] text-base">{{ cert.report_number }}</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2.5 text-sm">
+              <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">
+                <span class="font-semibold text-gray-500">Report Number:</span>
+                <span class="font-mono font-bold text-[#1e3a5f] text-base block sm:inline">{{ cert.report_number }}</span>
+              </div>
 
-              <div class="font-semibold text-gray-500">Customer Name:</div>
-              <div class="text-gray-900 font-medium">{{ cert.customer_name }}</div>
+              <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">
+                <span class="font-semibold text-gray-500">Customer Name:</span>
+                <span class="text-gray-900 font-medium block sm:inline">{{ cert.customer_name }}</span>
+              </div>
 
-              <div class="font-semibold text-gray-500">Gemstone:</div>
-              <div class="text-gray-900 font-bold text-base text-[#1e3a5f]">💎 {{ cert.gemstone_name }}</div>
+              <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">
+                <span class="font-semibold text-gray-500">Gemstone:</span>
+                <span class="text-gray-900 font-bold text-base text-[#1e3a5f] block sm:inline">💎 {{ cert.gemstone_name }}</span>
+              </div>
 
-              <div class="font-semibold text-gray-500">Weight:</div>
-              <div class="text-gray-900 font-bold">{{ cert.weight_carat }} Carats</div>
+              <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">
+                <span class="font-semibold text-gray-500">Weight:</span>
+                <span class="text-gray-900 font-bold block sm:inline">{{ cert.weight_carat }} Carats</span>
+              </div>
 
-              <div class="font-semibold text-gray-500">Shape / Cut:</div>
-              <div class="text-gray-900">{{ cert.shape_cut or '—' }}</div>
+              <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">
+                <span class="font-semibold text-gray-500">Shape / Cut:</span>
+                <span class="text-gray-900 block sm:inline">{{ cert.shape_cut or '—' }}</span>
+              </div>
 
-              <div class="font-semibold text-gray-500">Color:</div>
-              <div class="text-gray-900">{{ cert.color or '—' }}</div>
+              <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">
+                <span class="font-semibold text-gray-500">Color:</span>
+                <span class="text-gray-900 block sm:inline">{{ cert.color or '—' }}</span>
+              </div>
 
-              <div class="font-semibold text-gray-500">Refractive Index:</div>
-              <div class="text-gray-900 font-mono">{{ cert.refractive_index or '—' }}</div>
+              <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">
+                <span class="font-semibold text-gray-500">Refractive Index:</span>
+                <span class="text-gray-900 font-mono block sm:inline">{{ cert.refractive_index or '—' }}</span>
+              </div>
 
-              <div class="font-semibold text-gray-500">Specific Gravity:</div>
-              <div class="text-gray-900 font-mono">{{ cert.specific_gravity or '—' }}</div>
+              <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">
+                <span class="font-semibold text-gray-500">Specific Gravity:</span>
+                <span class="text-gray-900 font-mono block sm:inline">{{ cert.specific_gravity or '—' }}</span>
+              </div>
 
-              <div class="font-semibold text-gray-500">Hardness:</div>
-              <div class="text-gray-900">{{ (cert.hardness + ' (Mohs)') if cert.hardness else '—' }}</div>
+              <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">
+                <span class="font-semibold text-gray-500">Hardness:</span>
+                <span class="text-gray-900 block sm:inline">{{ (cert.hardness + ' (Mohs)') if cert.hardness else '—' }}</span>
+              </div>
 
-              <div class="font-semibold text-gray-500">Chemical Formula:</div>
-              <div class="text-gray-900 font-mono text-xs">{{ cert.chemical_formula or '—' }}</div>
+              <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">
+                <span class="font-semibold text-gray-500">Chemical Formula:</span>
+                <span class="text-gray-900 font-mono text-xs block sm:inline">{{ cert.chemical_formula or '—' }}</span>
+              </div>
 
-              <div class="font-semibold text-gray-500">Crystal System:</div>
-              <div class="text-gray-900">{{ cert.crystal_system or '—' }}</div>
+              <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">
+                <span class="font-semibold text-gray-500">Crystal System:</span>
+                <span class="text-gray-900 block sm:inline">{{ cert.crystal_system or '—' }}</span>
+              </div>
 
-              <div class="font-semibold text-gray-500">Issue Date:</div>
-              <div class="text-gray-900">{{ cert.created_at[:10] }}</div>
+              <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">
+                <span class="font-semibold text-gray-500">Issue Date:</span>
+                <span class="text-gray-900 block sm:inline">{{ cert.created_at[:10] }}</span>
+              </div>
             </div>
 
             {% if cert.comments %}
-            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-sm text-amber-900">
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 sm:p-3.5 text-xs sm:text-sm text-amber-900">
               <strong class="text-amber-800">Gemologist's Remarks:</strong> {{ cert.comments }}
             </div>
             {% endif %}
           </div>
 
           <!-- Product Image & QR Preview -->
-          <div class="flex flex-col items-center justify-center gap-3 bg-slate-50 rounded-xl p-4 border border-slate-200">
+          <div class="w-full flex flex-col sm:flex-row md:flex-col items-center justify-center gap-4 bg-slate-50 rounded-xl p-4 border border-slate-200">
             {% if cert.image_path %}
-            <img src="/static/uploads/{{ cert.image_path }}" class="w-40 h-40 object-cover rounded-xl border-2 border-white shadow-md" alt="Gemstone Image">
+            <img src="/static/uploads/{{ cert.image_path }}" class="w-36 h-36 sm:w-40 sm:h-40 object-cover rounded-xl border-2 border-white shadow-md" alt="Gemstone Image">
             {% else %}
-            <div class="w-36 h-36 rounded-xl bg-blue-50 border-2 border-dashed border-blue-200 flex flex-col items-center justify-center text-blue-500 shadow-inner">
+            <div class="w-32 h-32 sm:w-36 sm:h-36 rounded-xl bg-blue-50 border-2 border-dashed border-blue-200 flex flex-col items-center justify-center text-blue-500 shadow-inner">
               <span class="text-4xl">💎</span>
               <span class="text-xs font-medium mt-1">Certified Specimen</span>
             </div>
@@ -146,10 +170,10 @@
         </div>
       </div>
       {% elif report_number %}
-      <div class="bg-white rounded-2xl shadow-2xl p-8 text-center fade-in">
-        <div class="text-6xl mb-4">❌</div>
-        <h3 class="text-xl font-bold text-red-600">Certificate Not Found</h3>
-        <p class="text-gray-600 mt-2 text-sm">
+      <div class="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 text-center fade-in">
+        <div class="text-5xl sm:text-6xl mb-4">❌</div>
+        <h3 class="text-lg sm:text-xl font-bold text-red-600">Certificate Not Found</h3>
+        <p class="text-gray-600 mt-2 text-xs sm:text-sm">
           No record found for Report Number <strong class="font-mono text-gray-800">{{ report_number }}</strong>.
           Please double check the number printed on your certificate card.
         </p>
@@ -160,30 +184,30 @@
     <!-- Tabs: Online / Offline -->
     <div class="flex gap-2 mb-6 bg-white/5 rounded-xl p-1 max-w-md mx-auto">
       <button id="tab-online" onclick="switchTab('online')"
-        class="flex-1 py-2 rounded-lg text-sm font-semibold transition tab-active-btn">
+        class="flex-1 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition tab-active-btn min-h-[40px]">
         🌐 Online Verify
       </button>
       <button id="tab-offline" onclick="switchTab('offline')"
-        class="flex-1 py-2 rounded-lg text-sm font-semibold transition text-white/60 hover:text-white">
+        class="flex-1 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition text-white/60 hover:text-white min-h-[40px]">
         📴 Offline QR Verify
       </button>
     </div>
 
     <!-- Online Verify Panel -->
-    <div id="panel-online" class="bg-white rounded-2xl shadow-2xl p-8 mb-8 fade-in">
+    <div id="panel-online" class="bg-white rounded-2xl shadow-2xl p-4 sm:p-8 mb-6 sm:mb-8 fade-in">
       <!-- Camera Scan Button -->
-      <div class="mb-6 p-4 rounded-xl bg-blue-50 border border-blue-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
+      <div class="mb-6 p-3.5 sm:p-4 rounded-xl bg-blue-50 border border-blue-200 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+        <div class="flex items-center gap-3 w-full sm:w-auto">
           <div class="w-10 h-10 rounded-full bg-[#1e3a5f] text-white flex items-center justify-center text-xl flex-shrink-0">
             📷
           </div>
           <div>
-            <h4 class="font-bold text-[#1e3a5f] text-sm">Scan with Phone or Laptop Camera</h4>
-            <p class="text-xs text-gray-600">Instant certificate detection directly in your browser</p>
+            <h4 class="font-bold text-[#1e3a5f] text-xs sm:text-sm">Scan with Phone or Laptop Camera</h4>
+            <p class="text-[11px] sm:text-xs text-gray-600">Instant certificate detection directly in your browser</p>
           </div>
         </div>
         <button type="button" onclick="openCameraScanner()"
-          class="w-full sm:w-auto bg-[#c9a84c] hover:bg-[#b8963e] text-[#1e3a5f] font-bold px-5 py-2.5 rounded-lg text-xs uppercase tracking-wider transition shadow">
+          class="w-full sm:w-auto bg-[#c9a84c] hover:bg-[#b8963e] text-[#1e3a5f] font-bold px-4 sm:px-5 py-2.5 rounded-lg text-xs uppercase tracking-wider transition shadow min-h-[40px]">
           📸 Open Camera Scanner
         </button>
       </div>
@@ -192,63 +216,63 @@
       <div id="camera-scanner-wrap" class="hidden mb-6 p-4 bg-gray-900 rounded-xl text-center">
         <div class="flex justify-between items-center text-white mb-2 px-2">
           <span class="text-xs font-semibold">Point camera at Certificate QR Code</span>
-          <button type="button" onclick="closeCameraScanner()" class="text-xs text-red-400 hover:text-red-300 font-bold">✕ Close Camera</button>
+          <button type="button" onclick="closeCameraScanner()" class="text-xs text-red-400 hover:text-red-300 font-bold p-1">✕ Close Camera</button>
         </div>
         <div id="qr-reader" class="w-full max-w-sm mx-auto overflow-hidden rounded-lg"></div>
       </div>
 
       <div class="flex items-center gap-3 mb-6">
         <div class="flex-1 h-px bg-gray-200"></div>
-        <span class="text-xs text-gray-400 font-medium uppercase tracking-wider">or enter certificate details</span>
+        <span class="text-xs text-gray-400 font-medium uppercase tracking-wider text-center">or enter certificate details</span>
         <div class="flex-1 h-px bg-gray-200"></div>
       </div>
 
-      <form id="verify-form" class="space-y-5">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <form id="verify-form" class="space-y-4 sm:space-y-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
               📋 Report Number *
             </label>
             <input type="text" id="v-report" placeholder="e.g. IGI-2026-83715"
               value="{{ report_number or '' }}"
-              class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none
+              class="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-base sm:text-sm focus:outline-none
                 focus:border-[#1e3a5f] transition font-mono"/>
           </div>
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
+            <label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
               🔑 Secret PIN <span class="text-gray-400 font-normal">(Optional)</span>
             </label>
             <input type="text" id="v-pin" placeholder="6-digit PIN" maxlength="6"
               value="{{ secret_pin or '' }}"
-              class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none
+              class="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 sm:py-3 text-base sm:text-sm focus:outline-none
                 focus:border-[#1e3a5f] transition font-mono tracking-widest"/>
           </div>
         </div>
         <button type="submit"
-          class="w-full bg-[#1e3a5f] hover:bg-[#162d4d] text-white font-bold py-3.5 rounded-xl
-            text-sm tracking-wide transition shadow-lg hover:shadow-xl">
+          class="w-full bg-[#1e3a5f] hover:bg-[#162d4d] text-white font-bold py-3 sm:py-3.5 rounded-xl
+            text-sm tracking-wide transition shadow-lg hover:shadow-xl min-h-[44px]">
           🔍 Verify Certificate Authenticity
         </button>
       </form>
     </div>
 
     <!-- Offline QR Verify Panel -->
-    <div id="panel-offline" class="hidden bg-white rounded-2xl shadow-2xl p-8 mb-8 fade-in">
-      <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-5">
-        <h4 class="font-semibold text-blue-800 text-sm mb-1">📴 Offline Cryptographic Verification</h4>
-        <p class="text-xs text-blue-700">
+    <div id="panel-offline" class="hidden bg-white rounded-2xl shadow-2xl p-4 sm:p-8 mb-6 sm:mb-8 fade-in">
+      <div class="bg-blue-50 border border-blue-200 rounded-xl p-3.5 sm:p-4 mb-4 sm:mb-5">
+        <h4 class="font-semibold text-blue-800 text-xs sm:text-sm mb-1">📴 Offline Cryptographic Verification</h4>
+        <p class="text-[11px] sm:text-xs text-blue-700">
           Paste the raw JSON payload or scan data to verify the Ed25519 digital signature offline.
           <strong>Does not require internet.</strong>
         </p>
       </div>
-      <label class="block text-sm font-semibold text-gray-700 mb-2">
+      <label class="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">
         📄 QR Code Payload (JSON)
       </label>
       <textarea id="offline-qr-input" rows="6"
         placeholder='Paste QR payload here, e.g.: {"schema":"IGI-v1","inst":"Indian Gemological Institute",...}'
-        class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-xs font-mono focus:outline-none focus:border-[#1e3a5f] transition resize-none"></textarea>
+        class="w-full border-2 border-gray-200 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-base sm:text-xs font-mono focus:outline-none focus:border-[#1e3a5f] transition resize-none"></textarea>
       <button onclick="verifyOfflineQR()"
-        class="mt-4 w-full bg-[#1e3a5f] hover:bg-[#162d4d] text-white font-bold py-3.5 rounded-xl text-sm tracking-wide transition shadow-lg">
+        class="mt-4 w-full bg-[#1e3a5f] hover:bg-[#162d4d] text-white font-bold py-3 sm:py-3.5 rounded-xl text-sm tracking-wide transition shadow-lg min-h-[44px]">
         🔏 Verify Signature Offline
       </button>
     </div>

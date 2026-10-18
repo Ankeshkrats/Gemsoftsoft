@@ -9,9 +9,12 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex">
 
+  <!-- Mobile Drawer Backdrop Overlay -->
+  <div id="sidebar-backdrop" class="hidden fixed inset-0 mobile-drawer-backdrop z-40 lg:hidden"></div>
+
   <!-- ── Sidebar ── -->
-  <aside class="w-64 bg-[#1e3a5f] text-white flex flex-col fixed h-full z-20 shadow-2xl">
-    <div class="px-4 py-4 border-b border-white/10">
+  <aside id="sidebar" class="w-64 bg-[#1e3a5f] text-white flex flex-col fixed h-full z-50 shadow-2xl transition-transform duration-300 -translate-x-full lg:translate-x-0">
+    <div class="px-4 py-4 border-b border-white/10 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <img src="/static/logo.jpeg"
              alt="IGI Logo"
@@ -23,6 +26,12 @@
           <p class="text-xs text-blue-300 mt-0.5">Gemological Lab System</p>
         </div>
       </div>
+      <!-- Close drawer button for mobile -->
+      <button id="sidebar-close-btn" class="lg:hidden text-white/70 hover:text-white p-1 rounded-lg focus:outline-none" aria-label="Close sidebar">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
     </div>
     <nav class="flex-1 px-3 py-4 space-y-1">
       <a href="/dashboard" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm hover:bg-white/10 transition">
@@ -49,12 +58,12 @@
         <div class="w-8 h-8 rounded-full bg-[#c9a84c] flex items-center justify-center text-[#1e3a5f] font-bold text-sm">
           {{ session.full_name[0] | upper if session.full_name else 'G' }}
         </div>
-        <div>
-          <p class="text-sm font-medium">{{ session.full_name or session.username }}</p>
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-medium truncate">{{ session.full_name or session.username }}</p>
           <p class="text-xs text-blue-300">Gemologist</p>
         </div>
       </div>
-      <a href="/logout" class="flex items-center gap-2 text-xs text-red-300 hover:text-red-200 transition">
+      <a href="/logout" class="flex items-center gap-2 text-xs text-red-300 hover:text-red-200 transition py-1">
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"/>
@@ -65,34 +74,42 @@
   </aside>
 
   <!-- ── Main ── -->
-  <main class="ml-64 flex-1 min-h-screen">
+  <main class="ml-0 lg:ml-64 flex-1 min-h-screen min-w-0 flex flex-col">
     <!-- Top bar -->
-    <header class="bg-white shadow-sm px-8 py-4 flex items-center justify-between sticky top-0 z-10">
-      <div class="flex items-center gap-3">
-        <a href="/dashboard" class="text-gray-400 hover:text-gray-600 transition">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-          </svg>
-        </a>
-        <h2 class="text-xl font-bold text-gray-800">
-          {% if cert %}Edit / View Certificate{% else %}New Certificate{% endif %}
-        </h2>
+    <header class="bg-white shadow-sm px-4 sm:px-8 py-3.5 sm:py-4 sticky top-0 z-20">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5 sm:gap-3">
+          <!-- Mobile menu toggle -->
+          <button id="mobile-menu-btn" type="button" class="lg:hidden p-2 -ml-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none" aria-label="Open sidebar menu">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+          <a href="/dashboard" class="text-gray-400 hover:text-gray-600 transition p-1" title="Back to Dashboard">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </a>
+          <h2 class="text-lg sm:text-xl font-bold text-gray-800 leading-tight">
+            {% if cert %}Edit / View Certificate{% else %}New Certificate{% endif %}
+          </h2>
+        </div>
+        {% if cert %}
+        <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+          <a href="/certificate/{{ cert.id }}" target="_blank"
+            class="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-[#1e3a5f] text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-[#162d4d] transition shadow min-h-[38px]">
+            🖨️ Print Certificate
+          </a>
+          <a href="/labels/{{ cert.id }}"
+            class="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-[#c9a84c] text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-[#b8963e] transition shadow min-h-[38px]">
+            🏷️ Print Label
+          </a>
+        </div>
+        {% endif %}
       </div>
-      {% if cert %}
-      <div class="flex gap-2">
-        <a href="/certificate/{{ cert.id }}" target="_blank"
-          class="flex items-center gap-2 bg-[#1e3a5f] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#162d4d] transition shadow">
-          🖨️ Print Certificate
-        </a>
-        <a href="/labels/{{ cert.id }}"
-          class="flex items-center gap-2 bg-[#c9a84c] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#b8963e] transition shadow">
-          🏷️ Print Label
-        </a>
-      </div>
-      {% endif %}
     </header>
 
-    <div class="px-8 py-6">
+    <div class="px-4 sm:px-8 py-4 sm:py-6 flex-1">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% for category, message in messages %}
           <div class="mb-4 px-4 py-3 rounded-lg text-sm font-medium
@@ -107,42 +124,42 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
         <!-- Left Column: Customer & Gemstone -->
-        <div class="lg:col-span-2 space-y-6">
+        <div class="lg:col-span-2 space-y-4 sm:space-y-6">
 
           <!-- Customer Info -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
             <h3 class="text-base font-semibold text-[#1e3a5f] mb-4 flex items-center gap-2">
               <span>👤</span> Customer Information
             </h3>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-600 mb-1.5">Customer Name *</label>
                 <input type="text" name="customer_name" required
                   value="{{ cert.customer_name if cert else '' }}"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
                   placeholder="e.g. Ahmed Al-Rashid"/>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-600 mb-1.5">File Name / Ref</label>
                 <input type="text" name="file_name"
                   value="{{ cert.file_name if cert else '' }}"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
                   placeholder="e.g. LAB-2026-001"/>
               </div>
             </div>
           </div>
 
           <!-- Gemstone Parameters -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
             <h3 class="text-base font-semibold text-[#1e3a5f] mb-4 flex items-center gap-2">
               <span>💎</span> Gemstone Parameters
             </h3>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <!-- Gemstone Name -->
-              <div class="col-span-2">
+              <div class="col-span-1 sm:col-span-2">
                 <label class="block text-sm font-medium text-gray-600 mb-1.5">Gemstone Name *</label>
                 <select name="gemstone_name" id="gemstone_name" required
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] bg-white">
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] bg-white">
                   <option value="">— Select Gemstone —</option>
                   {% set has_custom = namespace(value=false) %}
                   {% for gem in gemstones %}
@@ -163,14 +180,14 @@
               </div>
 
               <!-- "Other" input — shown only when __other__ is selected -->
-              <div class="col-span-2" id="other-gemstone-wrap" style="display:none;">
+              <div class="col-span-1 sm:col-span-2" id="other-gemstone-wrap" style="display:none;">
                 <label class="block text-sm font-medium text-gray-600 mb-1.5">New Gemstone Name *</label>
-                <div class="flex gap-2">
+                <div class="flex flex-col sm:flex-row gap-2">
                   <input type="text" id="new_gemstone_name_input" name="new_gemstone_name"
-                    class="flex-1 border border-[#c9a84c] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#c9a84c]"
+                    class="flex-1 border border-[#c9a84c] rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#c9a84c]"
                     placeholder="e.g. Jeremejevite"/>
                   <button type="button" onclick="addGemstoneInline()"
-                    class="bg-[#c9a84c] hover:bg-[#b8963e] text-[#1e3a5f] px-4 py-2 rounded-lg text-sm font-semibold transition">
+                    class="bg-[#c9a84c] hover:bg-[#b8963e] text-[#1e3a5f] px-4 py-2.5 rounded-lg text-sm font-semibold transition flex-shrink-0 min-h-[40px]">
                     Save &amp; Use
                   </button>
                 </div>
@@ -181,7 +198,7 @@
                 <label class="block text-sm font-medium text-gray-600 mb-1.5">Weight (Carat) *</label>
                 <input type="number" name="weight_carat" step="0.01" min="0.01" required
                   value="{{ cert.weight_carat if cert else '' }}"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
                   placeholder="e.g. 2.45"/>
               </div>
 
@@ -189,7 +206,7 @@
                 <label class="block text-sm font-medium text-gray-600 mb-1.5">Shape / Cut</label>
                 <input type="text" name="shape_cut"
                   value="{{ cert.shape_cut if cert else '' }}"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
                   placeholder="e.g. Oval Brilliant"/>
               </div>
 
@@ -197,7 +214,7 @@
                 <label class="block text-sm font-medium text-gray-600 mb-1.5">Color</label>
                 <input type="text" name="color"
                   value="{{ cert.color if cert else '' }}"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
                   placeholder="e.g. Vivid Red"/>
               </div>
 
@@ -205,52 +222,52 @@
                 <label class="block text-sm font-medium text-gray-600 mb-1.5">Clarity / Comments</label>
                 <input type="text" name="comments"
                   value="{{ cert.comments if cert else '' }}"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
                   placeholder="e.g. No indications of heating"/>
               </div>
             </div>
           </div>
 
           <!-- Auto-filled Gemological Data -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
             <h3 class="text-base font-semibold text-[#1e3a5f] mb-1 flex items-center gap-2">
               <span>🔬</span> Gemological Properties
             </h3>
             <p class="text-xs text-gray-400 mb-4">Auto-filled when a gemstone is selected. You may override any value.</p>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-600 mb-1.5">Refractive Index</label>
                 <input type="text" name="refractive_index" id="refractive_index"
                   value="{{ cert.refractive_index if cert else '' }}"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Auto-filled"/>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-600 mb-1.5">Specific Gravity</label>
                 <input type="text" name="specific_gravity" id="specific_gravity"
                   value="{{ cert.specific_gravity if cert else '' }}"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Auto-filled"/>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-600 mb-1.5">Hardness (Mohs)</label>
                 <input type="text" name="hardness" id="hardness"
                   value="{{ cert.hardness if cert else '' }}"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Auto-filled"/>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-600 mb-1.5">Chemical Formula</label>
                 <input type="text" name="chemical_formula" id="chemical_formula"
                   value="{{ cert.chemical_formula if cert else '' }}"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Auto-filled"/>
               </div>
-              <div class="col-span-2">
+              <div class="col-span-1 sm:col-span-2">
                 <label class="block text-sm font-medium text-gray-600 mb-1.5">Crystal System / Species</label>
                 <input type="text" name="crystal_system" id="crystal_system"
                   value="{{ cert.crystal_system if cert else '' }}"
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Auto-filled"/>
               </div>
             </div>
@@ -258,10 +275,10 @@
         </div>
 
         <!-- Right Column: Image + Submit -->
-        <div class="space-y-6">
+        <div class="space-y-4 sm:space-y-6">
 
           <!-- Image Upload -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
             <h3 class="text-base font-semibold text-[#1e3a5f] mb-4 flex items-center gap-2">
               <span>🖼️</span> Gemstone Image
             </h3>
@@ -284,16 +301,16 @@
               <p class="text-xs text-gray-500 mb-2 font-medium">Preview</p>
               <img id="img-preview"
                 src="{{ '/static/uploads/' + cert.image_path if cert and cert.image_path else '' }}"
-                class="w-full h-48 object-cover rounded-lg border border-gray-200 shadow-sm"
+                class="w-full h-48 sm:h-56 object-cover rounded-lg border border-gray-200 shadow-sm"
                 alt="Gemstone Preview"/>
             </div>
           </div>
 
           <!-- Submit -->
           {% if not cert %}
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
             <button type="submit"
-              class="w-full bg-[#1e3a5f] hover:bg-[#162d4d] text-white font-semibold py-3 rounded-lg transition shadow-md hover:shadow-lg text-sm tracking-wide">
+              class="w-full bg-[#1e3a5f] hover:bg-[#162d4d] text-white font-semibold py-3.5 px-4 rounded-lg transition shadow-md hover:shadow-lg text-sm tracking-wide min-h-[44px]">
               💎 Generate Certificate
             </button>
             <p class="text-xs text-gray-400 text-center mt-2">
@@ -304,7 +321,7 @@
 
           <!-- Certificate Info (if viewing existing) -->
           {% if cert %}
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-3">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-3">
             <h3 class="text-base font-semibold text-[#1e3a5f]">Certificate Info</h3>
             <div class="space-y-2 text-sm">
               <div class="flex justify-between"><span class="text-gray-500">Report No.</span><span class="font-mono font-medium text-[#1e3a5f]">{{ cert.report_number }}</span></div>
