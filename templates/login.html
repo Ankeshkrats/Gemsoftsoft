@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign In / Register — Indian Gemological Institute</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+  <style>
+    body {
+      background: linear-gradient(135deg, #0b192c 0%, #1e3a5f 50%, #0f2040 100%);
+      min-height: 100vh;
+    }
+    .gem-particle {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.07;
+      animation: float 8s infinite ease-in-out;
+      pointer-events: none;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50%       { transform: translateY(-25px) rotate(180deg); }
+    }
+    .auth-tab-btn {
+      transition: all 0.2s ease;
+    }
+    .auth-tab-btn.active {
+      background: #ffffff;
+      color: #1e3a5f;
+      border-bottom: 3px solid #c9a84c;
+    }
+    .auth-tab-btn:not(.active) {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+    .auth-tab-btn:not(.active):hover {
+      background: #e2e8f0;
+      color: #334155;
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center p-4 relative overflow-x-hidden">
+
+  <!-- Ambient gemological background particles -->
+  <div class="gem-particle bg-yellow-400 w-32 h-32" style="top:8%;left:6%;animation-delay:0s"></div>
+  <div class="gem-particle bg-blue-400 w-24 h-24" style="top:65%;left:8%;animation-delay:2s"></div>
+  <div class="gem-particle bg-amber-300 w-28 h-28" style="top:15%;right:8%;animation-delay:1s"></div>
+  <div class="gem-particle bg-cyan-400 w-20 h-20" style="bottom:12%;right:10%;animation-delay:3s"></div>
+
+  <div class="relative z-10 w-full max-w-md my-8">
+
+    <!-- Card -->
+    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-100">
+
+      <!-- Institute Header -->
+      <div class="bg-gradient-to-r from-[#1e3a5f] to-[#0f2040] px-8 py-6 text-center text-white relative">
+        <div class="flex items-center justify-center gap-3.5 mb-2">
+          <img src="/static/logo.jpeg"
+               alt="IGI Logo"
+               class="h-14 w-14 rounded-full object-cover border-2 border-[#c9a84c]/80 shadow-md"
+               onerror="this.style.display='none'"/>
+          <div class="text-left">
+            <h1 class="text-lg font-bold text-[#c9a84c] tracking-wide leading-tight">Indian Gemological</h1>
+            <h1 class="text-lg font-bold text-white tracking-wide leading-tight">Institute</h1>
+          </div>
+        </div>
+        <p class="text-blue-200 text-xs tracking-widest uppercase font-medium">Laboratory Testing &amp; Certification System</p>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="flex border-b border-gray-200 bg-slate-100 font-semibold text-sm">
+        <button type="button" 
+                id="tab-btn-login" 
+                onclick="switchTab('login')" 
+                class="auth-tab-btn flex-1 py-3.5 text-center flex items-center justify-center gap-2 cursor-pointer {% if active_tab != 'register' %}active{% endif %}">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+          </svg>
+          Sign In
+        </button>
+        <button type="button" 
+                id="tab-btn-register" 
+                onclick="switchTab('register')" 
+                class="auth-tab-btn flex-1 py-3.5 text-center flex items-center justify-center gap-2 cursor-pointer {% if active_tab == 'register' %}active{% endif %}">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+          </svg>
+          Create Account
+        </button>
+      </div>
+
+      <!-- Content Area -->
+      <div class="px-8 py-6">
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="space-y-3 mb-5">
+              {% for category, message in messages %}
+                <div class="flex items-start gap-2.5 p-3.5 rounded-lg text-sm font-medium border
+                  {% if category == 'error' or category == 'danger' %}
+                    bg-red-50 text-red-800 border-red-200
+                  {% else %}
+                    bg-emerald-50 text-emerald-800 border-emerald-200
+                  {% endif %}">
+                  <span class="text-base leading-none mt-0.5">
+                    {% if category == 'error' or category == 'danger' %}⚠️{% else %}✓{% endif %}
+                  </span>
+                  <div class="flex-1">{{ message }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- 1. SIGN IN FORM -->
+        <div id="section-login" class="{% if active_tab == 'register' %}hidden{% endif %}">
+          <form method="POST" action="/login" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="action" value="login"/>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1.5" for="login-identifier">
+                Username or Email
+              </label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                  </svg>
+                </span>
+                <input type="text" 
+                       id="login-identifier" 
+                       name="identifier" 
+                       value="{{ login_identifier or '' }}" 
+                       required 
+                       autofocus
+                       class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent text-sm transition"
+                       placeholder="e.g. gemologist or lab@example.com"/>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1.5" for="login-pwd">
+                Password
+              </label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  </svg>
+                </span>
+                <input type="password" 
+                       id="login-pwd" 
+                       name="password" 
+                       required
+                       class="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] focus:border-transparent text-sm transition"
+                       placeholder="Enter your password"/>
+                <button type="button" 
+                        onclick="togglePwdVisibility('login-pwd', 'login-eye')"
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                  <svg id="login-eye" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between text-xs text-gray-500 pt-1">
+              <label class="flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" name="remember" value="1" checked class="rounded text-[#1e3a5f] focus:ring-[#1e3a5f]">
+                Remember this device
+              </label>
+            </div>
+
+            <button type="submit"
+                    class="w-full bg-[#1e3a5f] hover:bg-[#162d4d] text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm tracking-wide mt-2">
+              <span>Sign In to Laboratory</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+              </svg>
+            </button>
+          </form>
+
+          <div class="mt-6 pt-5 border-t border-gray-100 text-center">
+            <p class="text-sm text-gray-500">
+              New gemologist or laboratory technician?
+              <button type="button" onclick="switchTab('register')" class="text-[#c9a84c] font-bold hover:underline ml-1">
+                Create an Account
+              </button>
+            </p>
+          </div>
+        </div>
+
+        <!-- 2. CREATE ACCOUNT FORM -->
+        <div id="section-register" class="{% if active_tab != 'register' %}hidden{% endif %}">
+          <form method="POST" action="/login" class="space-y-3.5">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="action" value="register"/>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1" for="reg-name">
+                Full Name *
+              </label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A4 4 0 018 16h8a4 4 0 012.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                </span>
+                <input type="text" 
+                       id="reg-name" 
+                       name="full_name" 
+                       value="{{ reg_name or '' }}" 
+                       required 
+                       class="w-full pl-9 pr-3.5 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-sm"
+                       placeholder="e.g. Dr. Arthur Gemologist"/>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1" for="reg-username">
+                Username *
+              </label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                  </svg>
+                </span>
+                <input type="text" 
+                       id="reg-username" 
+                       name="username" 
+                       value="{{ reg_username or '' }}" 
+                       required 
+                       class="w-full pl-9 pr-3.5 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-sm"
+                       placeholder="Choose a username"/>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1" for="reg-email">
+                Email Address (Optional)
+              </label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
+                </span>
+                <input type="email" 
+                       id="reg-email" 
+                       name="email" 
+                       value="{{ reg_email or '' }}" 
+                       class="w-full pl-9 pr-3.5 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-sm"
+                       placeholder="gemologist@example.com"/>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1" for="reg-pwd">
+                Password * (min 6 chars)
+              </label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  </svg>
+                </span>
+                <input type="password" 
+                       id="reg-pwd" 
+                       name="password" 
+                       required 
+                       minlength="6"
+                       class="w-full pl-9 pr-9 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-sm"
+                       placeholder="At least 6 characters"/>
+                <button type="button" 
+                        onclick="togglePwdVisibility('reg-pwd', 'reg-eye-1')"
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                  <svg id="reg-eye-1" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1" for="reg-confirm-pwd">
+                Confirm Password *
+              </label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                  </svg>
+                </span>
+                <input type="password" 
+                       id="reg-confirm-pwd" 
+                       name="confirm_password" 
+                       required 
+                       minlength="6"
+                       class="w-full pl-9 pr-9 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-sm"
+                       placeholder="Re-enter password"/>
+                <button type="button" 
+                        onclick="togglePwdVisibility('reg-confirm-pwd', 'reg-eye-2')"
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                  <svg id="reg-eye-2" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                </button>
+              </div>
+              <div id="pwd-match-indicator" class="text-xs mt-1 hidden"></div>
+            </div>
+
+            <button type="submit"
+                    class="w-full bg-[#c9a84c] hover:bg-[#b8963e] text-slate-900 font-bold py-2.5 px-4 rounded-lg transition duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm tracking-wide mt-3">
+              <span>Create Account &amp; Sign In</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </button>
+          </form>
+
+          <div class="mt-5 pt-4 border-t border-gray-100 text-center">
+            <p class="text-sm text-gray-500">
+              Already have an account?
+              <button type="button" onclick="switchTab('login')" class="text-[#1e3a5f] font-bold hover:underline ml-1">
+                Sign In
+              </button>
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer: Public Verification -->
+      <div class="bg-slate-50 px-8 py-3.5 border-t border-gray-100 flex items-center justify-between">
+        <a href="/verify" class="inline-flex items-center gap-1.5 text-xs text-[#1e3a5f] hover:text-[#c9a84c] font-semibold transition">
+          <svg class="w-4 h-4 text-[#c9a84c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+          </svg>
+          Public Certificate Verification
+        </a>
+        <span class="text-[11px] text-gray-400">IGI Gemological</span>
+      </div>
+
+    </div>
+
+    <p class="text-center text-xs text-blue-200/60 mt-4">
+      &copy; 2026 Indian Gemological Institute — Gemological Laboratory System
+    </p>
+
+  </div>
+
+  <script>
+    function switchTab(tab) {
+      const loginSection = document.getElementById('section-login');
+      const regSection = document.getElementById('section-register');
+      const tabBtnLogin = document.getElementById('tab-btn-login');
+      const tabBtnReg = document.getElementById('tab-btn-register');
+
+      if (tab === 'register') {
+        loginSection.classList.add('hidden');
+        regSection.classList.remove('hidden');
+        tabBtnLogin.classList.remove('active');
+        tabBtnReg.classList.add('active');
+        const regName = document.getElementById('reg-name');
+        if (regName) regName.focus();
+      } else {
+        regSection.classList.add('hidden');
+        loginSection.classList.remove('hidden');
+        tabBtnReg.classList.remove('active');
+        tabBtnLogin.classList.add('active');
+        const loginId = document.getElementById('login-identifier');
+        if (loginId) loginId.focus();
+      }
+
+      // Update URL query parameter without page reload
+      try {
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tab);
+        window.history.replaceState({}, '', url);
+      } catch (e) {}
+    }
+
+    function togglePwdVisibility(inputId, eyeIconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(eyeIconId);
+      if (!input) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        if (icon) {
+          icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/>';
+        }
+      } else {
+        input.type = 'password';
+        if (icon) {
+          icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+        }
+      }
+    }
+
+    // Live password matching validator for registration
+    const regPwd = document.getElementById('reg-pwd');
+    const regConfirmPwd = document.getElementById('reg-confirm-pwd');
+    const pwdIndicator = document.getElementById('pwd-match-indicator');
+
+    function checkPasswordMatch() {
+      if (!regConfirmPwd.value) {
+        pwdIndicator.classList.add('hidden');
+        return;
+      }
+      pwdIndicator.classList.remove('hidden');
+      if (regPwd.value === regConfirmPwd.value) {
+        pwdIndicator.textContent = '✓ Passwords match';
+        pwdIndicator.className = 'text-xs mt-1 text-emerald-600 font-medium';
+      } else {
+        pwdIndicator.textContent = '✕ Passwords do not match';
+        pwdIndicator.className = 'text-xs mt-1 text-red-500 font-medium';
+      }
+    }
+
+    if (regPwd && regConfirmPwd) {
+      regPwd.addEventListener('input', checkPasswordMatch);
+      regConfirmPwd.addEventListener('input', checkPasswordMatch);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,377 @@
+/* ── Indian Gemological Institute — Custom Styles ── */
+
+:root {
+  --gem-primary: #1e3a5f;
+  --gem-accent:  #c9a84c;
+  --gem-light:   #f0f4f8;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: var(--gem-primary); border-radius: 3px; }
+
+/* ── Drag-Drop Zone ── */
+#drop-zone {
+  border: 2px dashed #a0aec0;
+  transition: border-color 0.2s, background 0.2s;
+}
+#drop-zone.drag-over {
+  border-color: var(--gem-accent);
+  background: #fffbeb;
+}
+
+/* ── Certificate Preview ── */
+.certificate-page {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  background: #fff;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  position: relative;
+  font-family: 'Georgia', serif;
+}
+
+/* Background watermark logo */
+.cert-watermark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.cert-watermark img {
+  width: 140mm;
+  height: 140mm;
+  object-fit: contain;
+  opacity: 0.12;
+  filter: contrast(1.15) saturate(1.1);
+  border-radius: 50%;
+}
+
+/* Make cert content sit above watermark */
+.cert-border-outer {
+  border: 6px solid var(--gem-primary);
+  margin: 8mm;
+  padding: 6mm;
+  min-height: calc(297mm - 32mm);
+  position: relative;
+  z-index: 1;
+}
+
+.cert-border-inner {
+  border: 2px solid var(--gem-accent);
+  padding: 6mm;
+  min-height: calc(297mm - 48mm);
+}
+
+.cert-header {
+  background: var(--gem-primary);
+  color: #fff;
+  padding: 5mm 8mm;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Institute logo in certificate header */
+.cert-logo {
+  width: 18mm;
+  height: 18mm;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid var(--gem-accent);
+  flex-shrink: 0;
+}
+
+.cert-header .company-name {
+  font-size: 20pt;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--gem-accent);
+  line-height: 1.2;
+}
+
+.cert-header .tagline {
+  font-size: 8pt;
+  opacity: 0.85;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.cert-title-bar {
+  background: var(--gem-accent);
+  color: var(--gem-primary);
+  text-align: center;
+  font-size: 14pt;
+  font-weight: 700;
+  letter-spacing: 3px;
+  padding: 3mm 0;
+  text-transform: uppercase;
+}
+
+.cert-params table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10pt;
+}
+
+.cert-params table td {
+  padding: 2.5mm 3mm;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.cert-params table td:first-child {
+  font-weight: 600;
+  color: var(--gem-primary);
+  width: 45%;
+  background: #f8fafc;
+}
+
+.cert-footer {
+  border-top: 2px solid var(--gem-accent);
+  margin-top: 4mm;
+  padding-top: 3mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-size: 8pt;
+  color: #64748b;
+}
+
+/* ── ID Card (ATM size: 85.6mm × 54mm) ── */
+.label-card {
+  width: 85.6mm;
+  height: 54mm;
+  border: 1.5px solid #ccc;
+  border-radius: 2mm;
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Arial', sans-serif;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* Top header: logo + institute name + address */
+.label-top-header {
+  background: #fff;
+  border-bottom: 3px solid var(--gem-primary);
+  padding: 1mm 2mm 0.5mm;
+  display: flex;
+  align-items: center;
+  gap: 1.5mm;
+}
+
+/* Logo in ID card header */
+.label-header-logo {
+  width: 8mm;
+  height: 8mm;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 0.5pt solid var(--gem-accent);
+  flex-shrink: 0;
+}
+
+.label-lab-name {
+  font-size: 7pt;
+  font-weight: 900;
+  color: var(--gem-primary);
+  line-height: 1.1;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.label-lab-address {
+  font-size: 3.8pt;
+  color: #555;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Blue title strip */
+.label-title-bar {
+  background: var(--gem-primary);
+  color: #fff;
+  font-size: 6.5pt;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-align: center;
+  text-transform: uppercase;
+  padding: 0.8mm 0;
+}
+
+/* Main body: fields | gem image + QR */
+.label-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Left: field table */
+.label-fields {
+  flex: 1;
+  padding: 0.8mm 1.5mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.label-row {
+  display: flex;
+  font-size: 5.3pt;
+  line-height: 1.6;
+}
+.label-key {
+  width: 18mm;
+  color: #333;
+  flex-shrink: 0;
+}
+.label-colon {
+  width: 2.5mm;
+  color: #333;
+  flex-shrink: 0;
+}
+.label-val {
+  color: #c0392b;
+  font-weight: 700;
+  flex: 1;
+}
+.label-val.normal { color: #222; font-weight: 400; }
+
+/* Right: QR + gem image + signature */
+.label-right {
+  width: 22mm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  padding: 1mm 1.5mm;
+  border-left: 0.5pt solid #ddd;
+  gap: 0.5mm;
+}
+.label-qr {
+  width: 14mm;
+  height: 14mm;
+  object-fit: contain;
+}
+.label-gem-img {
+  width: 13mm;
+  height: 13mm;
+  object-fit: cover;
+  border-radius: 1mm;
+  border: 0.5pt solid #ddd;
+}
+.label-signature {
+  font-size: 4.5pt;
+  color: var(--gem-primary);
+  text-align: center;
+  line-height: 1.3;
+  font-style: italic;
+  font-weight: 600;
+}
+
+/* ── Print Styles ── */
+@media print {
+  body * { visibility: hidden !important; }
+  
+  .print-area, .print-area * { visibility: visible !important; }
+  .print-area {
+    position: fixed !important;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background: white;
+  }
+
+  /* Certificate print */
+  .certificate-page {
+    box-shadow: none !important;
+    margin: 0 !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    page-break-after: always;
+  }
+
+  /* Watermark must print */
+  .cert-watermark { display: flex !important; }
+
+  /* Label print — 2 ATM cards per row */
+  .label-print-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 85.6mm);
+    gap: 6mm;
+    padding: 8mm;
+  }
+
+  .label-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-shadow: none;
+  }
+
+  @page {
+    size: A4;
+    margin: 0;
+  }
+}
+
+/* ── Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.3s ease-out; }
+
+/* ── Status Badge ── */
+.badge-verified {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+.badge-clone {
+  background: #ede9fe;
+  color: #5b21b6;
+  border: 1px solid #c4b5fd;
+}
+
+/* ── Sidebar nav active ── */
+.nav-link.active {
+  background: rgba(201,168,76,0.15);
+  color: var(--gem-accent);
+  border-right: 3px solid var(--gem-accent);
+}
+
+/* ── Table row hover ── */
+.hover-row:hover { background: #f0f9ff; cursor: pointer; }
+
+/* ── Gemstone auto-fill fields ── */
+.autofill-field {
+  background: #f0fdf4 !important;
+  border-color: #86efac !important;
+}
+
+/* ── Signature status badges ── */
+.sig-valid {
+  background: #d1fae5; color: #065f46; border: 2px solid #34d399;
+  padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 13px;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.sig-invalid {
+  background: #fee2e2; color: #991b1b; border: 2px solid #f87171;
+  padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 13px;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.sig-legacy {
+  background: #fef3c7; color: #92400e; border: 2px solid #fbbf24;
+  padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 13px;
+  display: inline-flex; align-items: center; gap: 8px;
+}

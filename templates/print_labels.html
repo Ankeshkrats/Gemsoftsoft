@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ID Cards – {{ cert.report_number }} – Indian Gemological Institute</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+  <style>
+    /* Watermark behind fields - enhanced visibility */
+    .card-watermark {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .card-watermark img {
+      width: 34mm;
+      height: 34mm;
+      object-fit: contain;
+      opacity: 0.18;
+      filter: contrast(1.15) saturate(1.15);
+    }
+    .label-fields { 
+      position: relative; 
+    }
+    .label-row {
+      position: relative;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body class="bg-gray-200 min-h-screen">
+
+  <!-- Screen Toolbar -->
+  <div class="no-print bg-[#1e3a5f] text-white px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-lg">
+    <div class="flex items-center gap-3">
+      <a href="/dashboard" class="text-blue-300 hover:text-white text-sm">← Dashboard</a>
+      <span class="text-white/30">|</span>
+      <span class="text-[#c9a84c] text-sm">ID Cards: {{ cert.report_number }}</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="/certificate/{{ cert.id }}"
+        class="text-sm bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded transition">
+        View Certificate
+      </a>
+      <button onclick="window.print()"
+        class="text-sm bg-[#c9a84c] text-[#1e3a5f] hover:bg-[#b8963e] px-4 py-1.5 rounded font-bold transition">
+        🖨️ Print Card(s)
+      </button>
+    </div>
+  </div>
+
+  <!-- Cards Grid -->
+  <div class="py-8 px-8 print-area" id="label-print-area">
+    <div class="no-print mb-6">
+      <h2 class="text-xl font-bold text-gray-700">Gemstone ID Cards</h2>
+      <p class="text-sm text-gray-500 mt-1">
+        Printing {{ certs|length }} card{% if certs|length != 1 %}s{% endif %} · ATM size (85.6 × 54 mm) · 2 per row.
+        Click "Print Card(s)" to send to printer.
+      </p>
+    </div>
+
+    <div class="label-print-grid flex flex-wrap gap-4 justify-start">
+      {% for c in certs %}
+      <div class="label-card">
+
+        <!-- ① Header: IGI logo + institute name -->
+        <div class="label-top-header">
+          <img src="/static/logo.jpeg"
+               alt="IGI"
+               class="label-header-logo"
+               onerror="this.style.display='none'"/>
+          <div style="min-width:0;">
+            <div class="label-lab-name">Indian Gemological Institute</div>
+            <div class="label-lab-address">{{ lab_address }}</div>
+          </div>
+        </div>
+
+        <!-- ② Blue title strip -->
+        <div class="label-title-bar">Gemstone Identification Card</div>
+
+        <!-- ③ Body -->
+        <div class="label-body">
+
+          <!-- Left: field rows -->
+          <div class="label-fields">
+            <!-- Watermark -->
+            <div class="card-watermark" aria-hidden="true">
+              <img src="/static/logo.jpeg" alt=""/>
+            </div>
+
+            <div class="label-row">
+              <span class="label-key">Name</span>
+              <span class="label-colon">:</span>
+              <span class="label-val">{{ c.gemstone_name }}</span>
+            </div>
+            <div class="label-row">
+              <span class="label-key">Cert No.</span>
+              <span class="label-colon">:</span>
+              <span class="label-val normal">{{ c.report_number }}</span>
+            </div>
+            <div class="label-row">
+              <span class="label-key">Weight</span>
+              <span class="label-colon">:</span>
+              <span class="label-val normal">{% if c.weight_carat %}{{ c.weight_carat }} ct{% else %}……{% endif %}</span>
+            </div>
+            <div class="label-row">
+              <span class="label-key">Shape / Cut</span>
+              <span class="label-colon">:</span>
+              <span class="label-val normal">{% if c.shape_cut %}{{ c.shape_cut }}{% else %}……{% endif %}</span>
+            </div>
+            <div class="label-row">
+              <span class="label-key">Colour</span>
+              <span class="label-colon">:</span>
+              <span class="label-val normal">{% if c.color %}{{ c.color }}{% else %}……{% endif %}</span>
+            </div>
+            <div class="label-row">
+              <span class="label-key">Refractive Idx</span>
+              <span class="label-colon">:</span>
+              <span class="label-val normal">{% if c.refractive_index %}{{ c.refractive_index }}{% else %}……{% endif %}</span>
+            </div>
+            <div class="label-row">
+              <span class="label-key">Hardness</span>
+              <span class="label-colon">:</span>
+              <span class="label-val normal">{% if c.hardness %}{{ c.hardness }}{% else %}……{% endif %}</span>
+            </div>
+            <div class="label-row">
+              <span class="label-key">Clarity</span>
+              <span class="label-colon">:</span>
+              <span class="label-val normal">{% if c.comments %}{{ c.comments }}{% else %}……{% endif %}</span>
+            </div>
+            <div class="label-row">
+              <span class="label-key">Crystal Sys.</span>
+              <span class="label-colon">:</span>
+              <span class="label-val normal">{% if c.crystal_system %}{{ c.crystal_system }}{% else %}……{% endif %}</span>
+            </div>
+            <div class="label-row">
+              <span class="label-key">Issued To</span>
+              <span class="label-colon">:</span>
+              <span class="label-val normal">{% if c.customer_name %}{{ c.customer_name }}{% else %}N/A{% endif %}</span>
+            </div>
+          </div>
+
+          <!-- Right: QR + gem image + gemologist -->
+          <div class="label-right">
+            {% if c.qr_code_path %}
+            <img src="/static/uploads/qrcodes/{{ c.qr_code_path }}"
+              class="label-qr" alt="QR"/>
+            {% else %}
+            <div class="label-qr bg-gray-100 flex items-center justify-center text-gray-300 text-xs rounded">QR</div>
+            {% endif %}
+
+            {% if c.image_path %}
+            <img src="/static/uploads/{{ c.image_path }}"
+              class="label-gem-img" alt="{{ c.gemstone_name }}"/>
+            {% else %}
+            <div class="label-gem-img flex items-center justify-center bg-gray-50 text-gray-300 text-lg">💎</div>
+            {% endif %}
+
+            <div class="label-signature">
+              {{ session.full_name if session.full_name else 'Gemologist' }}<br>
+              <span style="font-size:4pt;font-style:normal;">Gemologist</span>
+            </div>
+          </div>
+
+        </div><!-- /label-body -->
+      </div><!-- /label-card -->
+      {% endfor %}
+    </div>
+  </div>
+
+</body>
+</html>
