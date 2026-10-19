@@ -98,7 +98,7 @@
 
               <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">
                 <span class="font-semibold text-gray-500">Weight:</span>
-                <span class="text-gray-900 font-bold block sm:inline">{{ cert.weight_carat }} Carats</span>
+                <span class="text-gray-900 font-bold block sm:inline">{{ cert.weight_carat }}</span>
               </div>
 
               <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">
@@ -132,8 +132,8 @@
               </div>
 
               <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">
-                <span class="font-semibold text-gray-500">Crystal System:</span>
-                <span class="text-gray-900 block sm:inline">{{ cert.crystal_system or '—' }}</span>
+                <span class="font-semibold text-gray-500">Comment:</span>
+                <span class="text-gray-900 block sm:inline">{{ cert.comments or cert.crystal_system or '—' }}</span>
               </div>
 
               <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">

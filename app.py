@@ -16,8 +16,10 @@ from functools import wraps
 
 from flask import (
     Flask, g, flash, jsonify, redirect,
-    render_template, request, session, url_for
+    render_template, request, session, url_for, send_file
 )
+from io import BytesIO
+import card_pdf
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 from PIL import Image
@@ -600,15 +602,125 @@ def print_labels(cert_id):
         flash('Certificate not found.', 'error')
         return redirect(url_for('dashboard'))
 
-    if cert.get('is_clone'):
-        certs = [cert]
-    else:
+    # If all=1 is requested and cert has clones, show all. Otherwise default to single card
+    show_all = request.args.get('all') == '1'
+    if show_all and not cert.get('is_clone'):
         clones = db_mongo.get_certificate_clones(cert_id)
         certs  = [cert] + list(clones)
+    else:
+        certs = [cert]
 
     return render_template('print_labels.html', cert=cert, certs=certs,
+                           cert_ids_str=str(cert_id), is_merged=False,
                            institute=INSTITUTE_NAME,
                            lab_address=f'{INSTITUTE_ADDRESS} · {INSTITUTE_WEBSITE}')
+
+
+# ── Direct Single Card PDF Download ──────────────────────────────────────────
+@app.route('/labels/<int:cert_id>/pdf')
+@login_required
+def download_card_pdf(cert_id):
+    cert = db_mongo.get_certificate_by_id(cert_id)
+    if not cert:
+        flash('Certificate not found.', 'error')
+        return redirect(url_for('dashboard'))
+
+    buf = BytesIO()
+    gemologist = session.get('full_name') or 'Gemologist'
+    card_pdf.generate_single_card_pdf(cert, buf, base_dir=BASE_DIR, gemologist_name=gemologist)
+    buf.seek(0)
+
+    filename = f"{cert.get('report_number', 'IGI_Card')}_Card.pdf"
+    return send_file(
+        buf,
+        as_attachment=True,
+        download_name=filename,
+        mimetype='application/pdf'
+    )
+
+
+# ── Merged Cards (Max 6) View ─────────────────────────────────────────────────
+@app.route('/labels/merge')
+@login_required
+def merge_labels():
+    raw_ids = request.args.get('ids', '')
+    if not raw_ids:
+        flash('No certificates selected for merge.', 'error')
+        return redirect(url_for('dashboard'))
+
+    try:
+        id_list = [int(i.strip()) for i in raw_ids.split(',') if i.strip().isdigit()]
+    except Exception:
+        id_list = []
+
+    if not id_list:
+        flash('Invalid certificate IDs.', 'error')
+        return redirect(url_for('dashboard'))
+
+    if len(id_list) > 6:
+        id_list = id_list[:6]
+
+    certs = []
+    for cid in id_list:
+        c = db_mongo.get_certificate_by_id(cid)
+        if c:
+            certs.append(c)
+
+    if not certs:
+        flash('Selected certificates not found.', 'error')
+        return redirect(url_for('dashboard'))
+
+    first_cert = certs[0]
+    return render_template('print_labels.html', cert=first_cert, certs=certs,
+                           cert_ids_str=','.join(str(c['id']) for c in certs),
+                           is_merged=True,
+                           institute=INSTITUTE_NAME,
+                           lab_address=f'{INSTITUTE_ADDRESS} · {INSTITUTE_WEBSITE}')
+
+
+# ── Merged Cards (Max 6) PDF Download ─────────────────────────────────────────
+@app.route('/labels/merge/pdf')
+@login_required
+def download_merged_cards_pdf():
+    raw_ids = request.args.get('ids', '')
+    if not raw_ids:
+        flash('No certificates selected for merge.', 'error')
+        return redirect(url_for('dashboard'))
+
+    try:
+        id_list = [int(i.strip()) for i in raw_ids.split(',') if i.strip().isdigit()]
+    except Exception:
+        id_list = []
+
+    if not id_list:
+        flash('Invalid certificate IDs.', 'error')
+        return redirect(url_for('dashboard'))
+
+    if len(id_list) > 6:
+        id_list = id_list[:6]
+
+    certs = []
+    for cid in id_list:
+        c = db_mongo.get_certificate_by_id(cid)
+        if c:
+            certs.append(c)
+
+    if not certs:
+        flash('Selected certificates not found.', 'error')
+        return redirect(url_for('dashboard'))
+
+    buf = BytesIO()
+    gemologist = session.get('full_name') or 'Gemologist'
+    card_pdf.generate_merged_cards_pdf(certs, buf, base_dir=BASE_DIR, gemologist_name=gemologist)
+    buf.seek(0)
+
+    filename = f"IGI_Merged_{len(certs)}_Cards_A4.pdf"
+    return send_file(
+        buf,
+        as_attachment=True,
+        download_name=filename,
+        mimetype='application/pdf'
+    )
 
 
 # ── API: Gemstone Library ─────────────────────────────────────────────────────

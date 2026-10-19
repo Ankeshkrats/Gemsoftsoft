@@ -347,14 +347,14 @@ function renderVerifyResult(data, container) {
           ${row('Report No.', data.report_number)}
           ${row('Customer', data.customer_name)}
           ${row('Gemstone', data.gemstone_name)}
-          ${row('Weight', data.weight_carat ? data.weight_carat + ' ct' : '')}
+          ${row('Weight', data.weight_carat || '')}
           ${row('Shape / Cut', data.shape_cut)}
           ${row('Color', data.color)}
           ${row('Refractive Index', data.refractive_index)}
           ${row('Specific Gravity', data.specific_gravity)}
           ${row('Hardness', data.hardness ? data.hardness + ' (Mohs)' : '')}
           ${row('Chemical Formula', data.chemical_formula)}
-          ${row('Crystal System', data.crystal_system)}
+          ${row('Comment', data.comments || data.crystal_system)}
           ${row('Issued On', data.created_at ? data.created_at.slice(0, 10) : '')}
           ${row('Institute', data.institute || 'Indian Gemological Institute')}
         </div>
@@ -426,12 +426,12 @@ function renderOfflineResult(data, container) {
       ${row('Certificate No.', data.cert_no)}
       ${row('Institute', data.inst)}
       ${row('Gemstone', data.gem)}
-      ${row('Weight', data.weight ? data.weight + ' ct' : '')}
+      ${row('Weight', data.weight || '')}
       ${row('Shape / Cut', data.shape)}
       ${row('Color', data.color)}
       ${row('Refractive Index', data.ri)}
       ${row('Hardness (Mohs)', data.hardness)}
-      ${row('Crystal System', data.crystal)}
+      ${row('Comment', data.comments || data.crystal)}
       ${row('Issued To', data.issued_to)}
       ${row('Issue Date', data.date)}
       ${row('Key ID', data.kid)}
@@ -637,4 +637,98 @@ function toggleMobileSidebar(shouldOpen) {
     document.body.classList.remove('overflow-hidden', 'lg:overflow-auto');
   }
 }
+
+/* =====================================================
+   14. BATCH CARD SELECTION & MERGE (MAX 6 CARDS)
+   ===================================================== */
+function handleCertSelect(cb) {
+  const selected = getSelectedCertCheckboxes();
+  if (selected.length > 6) {
+    cb.checked = false;
+    showToast('Maximum 6 reports can be selected for 1 A4 sheet.', 'error');
+    return;
+  }
+  updateBatchActionBar();
+}
+
+function getSelectedCertCheckboxes() {
+  return Array.from(document.querySelectorAll('.cert-select-cb:checked'));
+}
+
+function getSelectedCertIds() {
+  return getSelectedCertCheckboxes().map(cb => cb.value);
+}
+
+function updateBatchActionBar() {
+  const bar = document.getElementById('batch-action-bar');
+  const countEl = document.getElementById('selected-count');
+  const selected = getSelectedCertCheckboxes();
+  const count = selected.length;
+
+  if (countEl) countEl.textContent = count;
+
+  if (count > 0) {
+    bar?.classList.remove('hidden');
+  } else {
+    bar?.classList.add('hidden');
+  }
+
+  // If 6 selected, disable other unchecked checkboxes
+  const allCbs = document.querySelectorAll('.cert-select-cb');
+  allCbs.forEach(cb => {
+    if (!cb.checked) {
+      cb.disabled = (count >= 6);
+    }
+  });
+
+  const selectAllCb = document.getElementById('select-all-cb');
+  if (selectAllCb) {
+    selectAllCb.checked = (count === 6 || (count > 0 && count === allCbs.length));
+  }
+}
+
+function toggleSelectAll(masterCb) {
+  const allCbs = Array.from(document.querySelectorAll('.cert-select-cb'));
+  if (!masterCb.checked) {
+    allCbs.forEach(cb => { cb.checked = false; cb.disabled = false; });
+  } else {
+    // Select at most 6
+    const toCheck = allCbs.slice(0, 6);
+    allCbs.forEach(cb => { cb.checked = false; cb.disabled = false; });
+    toCheck.forEach(cb => { cb.checked = true; });
+    if (allCbs.length > 6) {
+      showToast('First 6 reports selected (maximum per A4 page).', 'info');
+    }
+  }
+  updateBatchActionBar();
+}
+
+function clearSelectedCerts() {
+  document.querySelectorAll('.cert-select-cb').forEach(cb => {
+    cb.checked = false;
+    cb.disabled = false;
+  });
+  const master = document.getElementById('select-all-cb');
+  if (master) master.checked = false;
+  updateBatchActionBar();
+}
+
+function downloadMergedPDF() {
+  const ids = getSelectedCertIds();
+  if (!ids.length) {
+    showToast('Select at least 1 report to merge.', 'error');
+    return;
+  }
+  window.location.href = `/labels/merge/pdf?ids=${ids.join(',')}`;
+}
+
+function openMergedPrint() {
+  const ids = getSelectedCertIds();
+  if (!ids.length) {
+    showToast('Select at least 1 report to merge.', 'error');
+    return;
+  }
+  window.location.href = `/labels/merge?ids=${ids.join(',')}`;
+}
+
 

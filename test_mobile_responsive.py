@@ -54,7 +54,7 @@ class TestMobileResponsive(unittest.TestCase):
         self.assertIn('ml-0 lg:ml-64', html)
 
         # Check responsive stats grid
-        self.assertIn('grid grid-cols-1 sm:grid-cols-3', html)
+        self.assertIn('grid grid-cols-3', html)
 
         # Check responsive table container
         self.assertIn('responsive-table-container', html)
@@ -86,7 +86,11 @@ class TestMobileResponsive(unittest.TestCase):
         self.assertIn('id="img-preview"', html)
 
     def test_04_certificate_preview_responsive(self):
-        # Fetch an existing certificate or test template
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = 1
+            sess['username'] = 'test_gemologist'
+            sess['full_name'] = 'Test Gemologist'
+
         certs = db_mongo.get_all_certificates()[:1]
         if certs:
             cert_id = certs[0]['id']
@@ -106,6 +110,11 @@ class TestMobileResponsive(unittest.TestCase):
             self.assertIn('flex flex-wrap items-center justify-between', html)
 
     def test_05_print_labels_responsive(self):
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = 1
+            sess['username'] = 'test_gemologist'
+            sess['full_name'] = 'Test Gemologist'
+
         certs = db_mongo.get_all_certificates()[:1]
         if certs:
             cert_id = certs[0]['id']
@@ -119,6 +128,10 @@ class TestMobileResponsive(unittest.TestCase):
             # Check responsive toolbar and grid
             self.assertIn('label-print-grid flex flex-wrap gap-4 justify-center sm:justify-start', html)
             self.assertIn('label-card', html)
+
+            # Verify 'Comment' is present and 'Crystal Sys.' is removed
+            self.assertIn('Comment', html)
+            self.assertNotIn('Crystal Sys.', html)
 
     def test_06_verify_page_responsive(self):
         res = self.client.get('/verify')
@@ -182,6 +195,61 @@ class TestMobileResponsive(unittest.TestCase):
         # Verify Logo is served with 200
         res_logo = self.client.get('/static/logo.jpeg')
         self.assertEqual(res_logo.status_code, 200)
+
+    def test_10_merge_labels_view_and_pdf(self):
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = 1
+            sess['username'] = 'test_gemologist'
+            sess['full_name'] = 'Test Gemologist'
+
+        certs = db_mongo.get_all_certificates()[:6]
+        if certs:
+            ids_str = ','.join(str(c['id']) for c in certs)
+
+            # Test HTML view of merged cards
+            res_view = self.client.get(f'/labels/merge?ids={ids_str}')
+            self.assertEqual(res_view.status_code, 200)
+            html = res_view.data.decode('utf-8')
+            self.assertIn('label-card', html)
+            self.assertIn('Save Merged PDF', html)
+
+            # Test direct PDF download of merged cards
+            res_pdf = self.client.get(f'/labels/merge/pdf?ids={ids_str}')
+            self.assertEqual(res_pdf.status_code, 200)
+            self.assertEqual(res_pdf.headers['Content-Type'], 'application/pdf')
+            self.assertTrue(len(res_pdf.data) > 1000)
+
+    def test_11_single_card_pdf_download(self):
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = 1
+            sess['username'] = 'test_gemologist'
+            sess['full_name'] = 'Test Gemologist'
+
+        certs = db_mongo.get_all_certificates()[:1]
+        if certs:
+            cert_id = certs[0]['id']
+            res = self.client.get(f'/labels/{cert_id}/pdf')
+            self.assertEqual(res.status_code, 200)
+            self.assertEqual(res.headers['Content-Type'], 'application/pdf')
+            self.assertTrue(len(res.data) > 1000)
+
+    def test_12_dashboard_features(self):
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = 1
+            sess['username'] = 'test_gemologist'
+            sess['full_name'] = 'Test Gemologist'
+
+        res = self.client.get('/dashboard')
+        self.assertEqual(res.status_code, 200)
+        html = res.data.decode('utf-8')
+
+        # Batch merge action bar
+        self.assertIn('id="batch-action-bar"', html)
+        self.assertIn('cert-select-cb', html)
+        self.assertIn('Save Merged PDF', html)
+
+        # Direct card PDF download button exists
+        self.assertIn('/pdf', html)
 
 if __name__ == '__main__':
     unittest.main()

@@ -20,27 +20,23 @@
       <span class="text-[#c9a84c] font-mono font-medium">{{ cert.report_number }}</span>
     </div>
     <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+      <a href="/labels/{{ cert.id }}/pdf"
+        class="flex-1 sm:flex-initial text-center text-xs sm:text-sm bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded-lg font-bold transition shadow-sm min-h-[38px] flex items-center justify-center gap-1.5">
+        📥 Save Card PDF
+      </a>
       <a href="/labels/{{ cert.id }}"
         class="flex-1 sm:flex-initial text-center text-xs sm:text-sm bg-[#c9a84c] hover:bg-[#b8963e] text-[#1e3a5f] px-3 sm:px-4 py-2 rounded-lg font-bold transition shadow-sm min-h-[38px] flex items-center justify-center">
-        🏷️ Print Label
+        🏷️ View Card
       </a>
       <button onclick="window.print()"
         class="flex-1 sm:flex-initial text-center text-xs sm:text-sm bg-white text-[#1e3a5f] px-3 sm:px-4 py-2 rounded-lg font-bold hover:bg-gray-100 transition shadow-sm min-h-[38px] flex items-center justify-center">
-        🖨️ Print / Save PDF
+        🖨️ Print A4 Report
       </button>
     </div>
   </div>
 
-  <!-- Mobile Swipe Notice (Screen only) -->
-  <div class="no-print px-4 pt-3 sm:hidden">
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-2.5 text-xs text-blue-900 flex items-center justify-between shadow-sm">
-      <span>↔ Swipe horizontally to inspect full A4 certificate</span>
-      <button onclick="window.print()" class="underline font-bold ml-2 text-[#1e3a5f] flex-shrink-0">Print A4</button>
-    </div>
-  </div>
-
   <!-- ── Certificate Page ── -->
-  <div class="py-4 sm:py-8 px-2 sm:px-4 print-area" id="cert-print-area">
+  <div class="py-2 sm:py-8 px-2 sm:px-4 print-area" id="cert-print-area">
     <div class="cert-screen-wrapper">
       <div class="certificate-page">
         <div class="cert-border-outer">
@@ -55,7 +51,7 @@
 
           <!-- Header -->
           <div class="cert-header">
-            <div class="flex items-center gap-5">
+            <div class="flex items-center gap-3 sm:gap-5">
               <img src="/static/logo.jpeg"
                    alt="Indian Gemological Institute"
                    class="cert-logo"
@@ -63,15 +59,16 @@
               <div>
                 <div class="company-name">Indian Gemological Institute</div>
                 <div class="tagline">Gemological Testing Laboratory</div>
-                <div style="font-size:7.5pt;opacity:0.7;margin-top:2px;">
+                <div class="cert-header-contact" style="font-size:7.5pt;opacity:0.75;margin-top:2px;">
                   indiangemological.com &nbsp;•&nbsp; info@indiangemological.com
                 </div>
               </div>
             </div>
-            <div class="text-right flex flex-col items-end gap-2">
+            <div class="text-right flex flex-col items-center sm:items-end gap-1.5 sm:gap-2">
               {% if cert.qr_code_path %}
                 <img src="/static/uploads/qrcodes/{{ cert.qr_code_path }}"
-                  style="width:60px;height:60px;background:white;padding:3px;border-radius:4px;"
+                  class="cert-header-qr"
+                  style="width:56px;height:56px;background:white;padding:3px;border-radius:4px;"
                   alt="Signed QR Code"/>
                 <span style="font-size:6pt;color:#c9a84c;letter-spacing:0.5px;">🔏 DIGITALLY SIGNED</span>
               {% endif %}
@@ -82,32 +79,32 @@
           <div class="cert-title-bar">Gemstone Identification Report</div>
 
           <!-- Report Number Strip -->
-          <div style="background:#f8fafc;border-bottom:1px solid #e2e8f0;padding:2.5mm 4mm;display:flex;justify-content:space-between;align-items:center;">
-            <div style="font-size:9pt;">
+          <div class="cert-strip">
+            <div>
               <strong style="color:#1e3a5f;">Report No.:</strong>
-              <span style="font-family:monospace;font-size:11pt;font-weight:700;color:#1e3a5f;margin-left:4px;">{{ cert.report_number }}</span>
+              <span style="font-family:monospace;font-size:10.5pt;font-weight:700;color:#1e3a5f;margin-left:4px;">{{ cert.report_number }}</span>
             </div>
-            <div style="font-size:9pt;">
+            <div>
               <strong style="color:#1e3a5f;">Date:</strong>
               <span style="margin-left:4px;color:#475569;">{{ cert.created_at[:10] }}</span>
             </div>
-            <div style="font-size:9pt;">
+            <div>
               <strong style="color:#1e3a5f;">PIN:</strong>
               <span style="font-family:monospace;font-weight:700;color:#dc2626;margin-left:4px;">{{ cert.secret_pin }}</span>
             </div>
           </div>
 
           <!-- Body: Image + Parameters -->
-          <div style="display:flex;gap:6mm;padding:5mm 2mm;align-items:flex-start;">
+          <div class="cert-body-layout">
 
             <!-- Gemstone Image -->
-            <div style="flex-shrink:0;">
+            <div class="cert-gem-img-wrap">
               {% if cert.image_path %}
                 <img src="/static/uploads/{{ cert.image_path }}"
-                  style="width:55mm;height:55mm;object-fit:cover;border:2px solid #e2e8f0;border-radius:3mm;"
+                  class="cert-gem-img"
                   alt="{{ cert.gemstone_name }}"/>
               {% else %}
-                <div style="width:55mm;height:55mm;background:#f1f5f9;border:2px dashed #cbd5e1;border-radius:3mm;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:28pt;">
+                <div class="cert-img-placeholder">
                   💎
                 </div>
               {% endif %}
@@ -117,28 +114,28 @@
             </div>
 
             <!-- Parameters Table -->
-            <div class="cert-params" style="flex:1;">
+            <div class="cert-params">
               <table>
                 <tr><td>Customer Name</td><td><strong>{{ cert.customer_name }}</strong></td></tr>
                 <tr><td>File Reference</td><td>{{ cert.file_name or '—' }}</td></tr>
                 <tr><td>Gemstone Species</td><td><strong>{{ cert.gemstone_name }}</strong></td></tr>
-                <tr><td>Weight</td><td><strong>{{ cert.weight_carat }} Carats</strong></td></tr>
+                <tr><td>Weight</td><td><strong>{{ cert.weight_carat }}</strong></td></tr>
                 <tr><td>Shape / Cut</td><td>{{ cert.shape_cut or '—' }}</td></tr>
                 <tr><td>Color</td><td>{{ cert.color or '—' }}</td></tr>
                 <tr><td>Refractive Index</td><td>{{ cert.refractive_index or '—' }}</td></tr>
                 <tr><td>Specific Gravity</td><td>{{ cert.specific_gravity or '—' }}</td></tr>
                 <tr><td>Hardness (Mohs)</td><td>{{ cert.hardness or '—' }}</td></tr>
                 <tr><td>Chemical Formula</td><td>{{ cert.chemical_formula or '—' }}</td></tr>
-                <tr><td>Crystal System</td><td>{{ cert.crystal_system or '—' }}</td></tr>
+                <tr><td>Comment</td><td>{{ cert.comments or cert.crystal_system or '—' }}</td></tr>
               </table>
             </div>
           </div>
 
-          <!-- Comments -->
+          <!-- Comments box -->
           {% if cert.comments %}
-          <div style="margin:3mm 2mm;background:#fffbeb;border:1px solid #fde68a;border-radius:2mm;padding:3mm 4mm;">
+          <div class="cert-comments-box">
             <strong style="font-size:9pt;color:#1e3a5f;">Gemologist's Comments:</strong>
-            <p style="margin-top:1.5mm;font-size:9.5pt;color:#374151;font-style:italic;">{{ cert.comments }}</p>
+            <p style="margin-top:1.5mm;font-size:9pt;color:#374151;font-style:italic;">{{ cert.comments }}</p>
           </div>
           {% endif %}
 
@@ -150,7 +147,7 @@
             <div>
               <p style="font-weight:600;color:#1e3a5f;">Indian Gemological Institute</p>
               <p>Certified Gemologist Signature: ___________________________</p>
-              <p style="margin-top:2mm;">This certificate is the property of the laboratory and is issued subject to the conditions on the reverse.</p>
+              <p style="margin-top:2mm;font-size:7pt;">This certificate is the property of the laboratory and is issued subject to the conditions on the reverse.</p>
             </div>
             <div class="text-right">
               <p>Scan QR or visit:</p>
@@ -160,14 +157,14 @@
           </div>
 
           <!-- Bottom accent bar -->
-          <div style="background:linear-gradient(to right,#1e3a5f,#0f2040);margin-top:3mm;padding:2mm 4mm;display:flex;justify-content:space-between;align-items:center;">
-            <span style="color:#c9a84c;font-size:7pt;letter-spacing:2px;">AUTHENTIC GEMOLOGICAL CERTIFICATE — DIGITALLY SIGNED</span>
-            <span style="color:rgba(255,255,255,0.5);font-size:7pt;">© Indian Gemological Institute 2026</span>
+          <div class="cert-bottom-bar">
+            <span style="color:#c9a84c;font-size:6.5pt;letter-spacing:1.5px;">AUTHENTIC GEMOLOGICAL CERTIFICATE — DIGITALLY SIGNED</span>
+            <span style="color:rgba(255,255,255,0.5);font-size:6.5pt;">© Indian Gemological Institute 2026</span>
           </div>
 
         </div><!-- cert-border-inner -->
-      </div><!-- cert-border-outer -->
-    </div><!-- certificate-page -->
+        </div><!-- cert-border-outer -->
+      </div><!-- certificate-page -->
     </div><!-- cert-screen-wrapper -->
   </div><!-- print-area -->
 

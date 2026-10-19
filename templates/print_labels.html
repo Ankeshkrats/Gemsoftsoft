@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ID Cards – {{ cert.report_number }} – Indian Gemological Institute</title>
+  <title>{% if is_merged %}Merged ID Cards ({{ certs|length }}){% else %}ID Card – {{ cert.report_number }}{% endif %} – Indian Gemological Institute</title>
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/static/css/style.css"/>
@@ -22,10 +22,10 @@
       print-color-adjust: exact;
     }
     .card-watermark img {
-      width: 34mm;
-      height: 34mm;
+      width: 32mm;
+      height: 32mm;
       object-fit: contain;
-      opacity: 0.18;
+      opacity: 0.16;
       filter: contrast(1.15) saturate(1.15);
     }
     .label-fields { 
@@ -39,35 +39,65 @@
 </head>
 <body class="bg-gray-200 min-h-screen">
 
-  <!-- Screen Toolbar -->
+  <!-- Screen Toolbar (hidden in print) -->
   <div class="no-print bg-[#1e3a5f] text-white px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20 shadow-lg">
     <div class="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
       <a href="/dashboard" class="text-blue-300 hover:text-white transition flex items-center gap-1 font-medium py-1">← Dashboard</a>
       <span class="text-white/30">|</span>
-      <span class="text-[#c9a84c] font-mono font-medium">ID Cards: {{ cert.report_number }}</span>
+      <span class="text-[#c9a84c] font-mono font-medium">
+        {% if is_merged %}
+          Merged: {{ certs|length }} Cards (A4)
+        {% else %}
+          ID Card: {{ cert.report_number }}
+        {% endif %}
+      </span>
     </div>
     <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+      {% if not is_merged %}
       <a href="/certificate/{{ cert.id }}"
         class="flex-1 sm:flex-initial text-center text-xs sm:text-sm bg-white/10 hover:bg-white/20 text-white px-3 sm:px-4 py-2 rounded-lg font-medium transition min-h-[38px] flex items-center justify-center">
-        View Certificate
+        Full Report
       </a>
+      <!-- Direct 1-Click PDF Download -->
+      <a href="/labels/{{ cert.id }}/pdf"
+        class="flex-1 sm:flex-initial text-center text-xs sm:text-sm bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded-lg font-bold transition shadow-sm min-h-[38px] flex items-center justify-center gap-1.5">
+        📥 Save PDF
+      </a>
+      {% else %}
+      <!-- Direct 1-Click Merged PDF Download -->
+      <a href="/labels/merge/pdf?ids={{ cert_ids_str }}"
+        class="flex-1 sm:flex-initial text-center text-xs sm:text-sm bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded-lg font-bold transition shadow-sm min-h-[38px] flex items-center justify-center gap-1.5">
+        📥 Save Merged PDF (A4)
+      </a>
+      {% endif %}
       <button onclick="window.print()"
-        class="flex-1 sm:flex-initial text-center text-xs sm:text-sm bg-[#c9a84c] text-[#1e3a5f] hover:bg-[#b8963e] px-3 sm:px-4 py-2 rounded-lg font-bold transition shadow-sm min-h-[38px] flex items-center justify-center">
-        🖨️ Print Card(s)
+        class="flex-1 sm:flex-initial text-center text-xs sm:text-sm bg-[#c9a84c] text-[#1e3a5f] hover:bg-[#b8963e] px-3 sm:px-4 py-2 rounded-lg font-bold transition shadow-sm min-h-[38px] flex items-center justify-center gap-1.5">
+        🖨️ Print
       </button>
     </div>
   </div>
 
-  <!-- Cards Grid -->
-  <div class="py-4 sm:py-8 px-3 sm:px-8 print-area" id="label-print-area">
-    <div class="no-print mb-4 sm:mb-6">
-      <h2 class="text-lg sm:text-xl font-bold text-gray-700">Gemstone ID Cards</h2>
-      <p class="text-xs sm:text-sm text-gray-500 mt-1">
-        Printing {{ certs|length }} card{% if certs|length != 1 %}s{% endif %} · ATM size (85.6 × 54 mm) · 2 per row.
-        Click "Print Card(s)" to send to printer.
-      </p>
+  <!-- Screen Information Banner (Strictly screen-only, never printed) -->
+  <div class="no-print max-w-4xl mx-auto px-3 sm:px-6 pt-3 sm:pt-5">
+    <div class="bg-blue-50 border border-blue-200 text-blue-900 px-3.5 py-2.5 rounded-lg text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-sm">
+      <div class="flex items-center gap-2">
+        <span class="text-base">💳</span>
+        <span>
+          {% if is_merged %}
+            <strong>{{ certs|length }} cards merged</strong> onto 1 A4 page (max 6). Click <strong>"Save Merged PDF"</strong> to download directly.
+          {% else %}
+            Standard ATM Card size (85.6 × 54 mm). Click <strong>"Save PDF"</strong> to download directly without print setup.
+          {% endif %}
+        </span>
+      </div>
+      {% if is_merged %}
+      <span class="text-xs bg-blue-200/70 text-blue-800 font-semibold px-2 py-0.5 rounded self-start sm:self-auto">1 A4 Page</span>
+      {% endif %}
     </div>
+  </div>
 
+  <!-- Cards Grid Print Area: strictly contains cards, NO extra text -->
+  <div class="py-4 sm:py-6 px-2 sm:px-8 print-area" id="label-print-area">
     <div class="label-print-grid flex flex-wrap gap-4 justify-center sm:justify-start">
       {% for c in certs %}
       <div class="label-card">
@@ -110,7 +140,7 @@
             <div class="label-row">
               <span class="label-key">Weight</span>
               <span class="label-colon">:</span>
-              <span class="label-val normal">{% if c.weight_carat %}{{ c.weight_carat }} ct{% else %}……{% endif %}</span>
+              <span class="label-val normal">{% if c.weight_carat %}{{ c.weight_carat }}{% else %}……{% endif %}</span>
             </div>
             <div class="label-row">
               <span class="label-key">Shape / Cut</span>
@@ -135,12 +165,12 @@
             <div class="label-row">
               <span class="label-key">Clarity</span>
               <span class="label-colon">:</span>
-              <span class="label-val normal">{% if c.comments %}{{ c.comments }}{% else %}……{% endif %}</span>
+              <span class="label-val normal">{% if c.clarity %}{{ c.clarity }}{% else %}Transparent{% endif %}</span>
             </div>
             <div class="label-row">
-              <span class="label-key">Crystal Sys.</span>
+              <span class="label-key">Comment</span>
               <span class="label-colon">:</span>
-              <span class="label-val normal">{% if c.crystal_system %}{{ c.crystal_system }}{% else %}……{% endif %}</span>
+              <span class="label-val normal">{% if c.comments %}{{ c.comments }}{% elif c.crystal_system %}{{ c.crystal_system }}{% else %}..{% endif %}</span>
             </div>
             <div class="label-row">
               <span class="label-key">Issued To</span>
@@ -177,5 +207,16 @@
     </div>
   </div>
 
+  <script>
+    // Direct auto-download trigger if ?download=1 in query params
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('download') === '1') {
+      {% if is_merged %}
+      window.location.href = "/labels/merge/pdf?ids={{ cert_ids_str }}";
+      {% else %}
+      window.location.href = "/labels/{{ cert.id }}/pdf";
+      {% endif %}
+    }
+  </script>
 </body>
 </html>
