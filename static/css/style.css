@@ -239,7 +239,7 @@
 }
 
 .label-lab-name {
-  font-size: 7pt;
+  font-size: 8.5pt;
   font-weight: 900;
   color: var(--gem-primary);
   line-height: 1.1;
@@ -249,7 +249,7 @@
   text-overflow: ellipsis;
 }
 .label-lab-address {
-  font-size: 3.8pt;
+  font-size: 4.2pt;
   color: #555;
   line-height: 1.3;
   white-space: nowrap;
@@ -436,12 +436,12 @@
   /* Watermark must print */
   .cert-watermark { display: flex !important; }
 
-  /* Label print — 2 ATM cards per row, up to 6 on 1 A4 page */
+  /* Label print — 2 ATM cards per row, up to 8 on 1 A4 page */
   .label-print-grid {
     display: grid !important;
     grid-template-columns: repeat(2, 85.6mm) !important;
     column-gap: 6mm !important;
-    row-gap: 6mm !important;
+    row-gap: 5mm !important;
     padding: 6mm !important;
     margin: 0 auto !important;
     width: fit-content !important;

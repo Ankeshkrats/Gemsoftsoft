@@ -639,13 +639,13 @@ function toggleMobileSidebar(shouldOpen) {
 }
 
 /* =====================================================
-   14. BATCH CARD SELECTION & MERGE (MAX 6 CARDS)
+   14. BATCH CARD SELECTION & MERGE (MAX 8 CARDS)
    ===================================================== */
 function handleCertSelect(cb) {
   const selected = getSelectedCertCheckboxes();
-  if (selected.length > 6) {
+  if (selected.length > 8) {
     cb.checked = false;
-    showToast('Maximum 6 reports can be selected for 1 A4 sheet.', 'error');
+    showToast('Maximum 8 reports can be selected for 1 A4 sheet.', 'error');
     return;
   }
   updateBatchActionBar();
@@ -673,17 +673,17 @@ function updateBatchActionBar() {
     bar?.classList.add('hidden');
   }
 
-  // If 6 selected, disable other unchecked checkboxes
+  // If 8 selected, disable other unchecked checkboxes
   const allCbs = document.querySelectorAll('.cert-select-cb');
   allCbs.forEach(cb => {
     if (!cb.checked) {
-      cb.disabled = (count >= 6);
+      cb.disabled = (count >= 8);
     }
   });
 
   const selectAllCb = document.getElementById('select-all-cb');
   if (selectAllCb) {
-    selectAllCb.checked = (count === 6 || (count > 0 && count === allCbs.length));
+    selectAllCb.checked = (count === 8 || (count > 0 && count === allCbs.length));
   }
 }
 
@@ -692,12 +692,12 @@ function toggleSelectAll(masterCb) {
   if (!masterCb.checked) {
     allCbs.forEach(cb => { cb.checked = false; cb.disabled = false; });
   } else {
-    // Select at most 6
-    const toCheck = allCbs.slice(0, 6);
+    // Select at most 8
+    const toCheck = allCbs.slice(0, 8);
     allCbs.forEach(cb => { cb.checked = false; cb.disabled = false; });
     toCheck.forEach(cb => { cb.checked = true; });
-    if (allCbs.length > 6) {
-      showToast('First 6 reports selected (maximum per A4 page).', 'info');
+    if (allCbs.length > 8) {
+      showToast('First 8 reports selected (maximum per A4 page).', 'info');
     }
   }
   updateBatchActionBar();

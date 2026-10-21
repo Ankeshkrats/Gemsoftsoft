@@ -1,6 +1,6 @@
 """
 Card PDF Generator for Indian Gemological Institute
-Generates single CR-80 card PDFs (85.6mm x 54mm) and merged 6-card A4 PDFs (2x3 grid)
+Generates single CR-80 card PDFs (85.6mm x 54mm) and merged 8-card A4 PDFs (2x4 grid)
 using ReportLab with exact dimensions, colors, logos, and QR codes.
 """
 
@@ -67,12 +67,12 @@ def draw_card(c: canvas.Canvas, x: float, y: float, cert: dict, base_dir: str = 
 
     # Header text
     c.setFillColor(COLOR_PRIMARY)
-    c.setFont("Helvetica-Bold", 6.8)
-    c.drawString(x + 10.0 * mm, header_y + 4.8 * mm, "Indian Gemological Institute")
+    c.setFont("Helvetica-Bold", 8.4)
+    c.drawString(x + 10.0 * mm, header_y + 4.6 * mm, "Indian Gemological Institute")
 
     c.setFillColor(COLOR_GRAY)
-    c.setFont("Helvetica", 3.8)
-    c.drawString(x + 10.0 * mm, header_y + 1.6 * mm, "indiangemological.com  •  Gemological Testing Lab")
+    c.setFont("Helvetica", 4.0)
+    c.drawString(x + 10.0 * mm, header_y + 1.6 * mm, "Gemological Testing Lab")
 
     # Header underline
     c.setStrokeColor(COLOR_PRIMARY)
@@ -238,7 +238,7 @@ def generate_single_card_pdf(cert: dict, output_stream_or_path, base_dir: str = 
 
 def generate_merged_cards_pdf(certs: list, output_stream_or_path, base_dir: str = '.', gemologist_name: str = 'Gemologist'):
     """
-    Generate an A4 page containing up to 6 cards in a 2-column x 3-row grid.
+    Generate an A4 page containing up to 8 cards in a 2-column x 4-row grid.
     Strictly 1 single A4 page.
     """
     can = canvas.Canvas(output_stream_or_path, pagesize=A4)
@@ -246,31 +246,31 @@ def generate_merged_cards_pdf(certs: list, output_stream_or_path, base_dir: str 
 
     page_width, page_height = A4  # 210mm x 297mm
 
-    # Limit to max 6 cards for 1 page
-    selected = certs[:6]
+    # Limit to max 8 cards for 1 page
+    selected = certs[:8]
 
-    # Grid layout: 2 columns, 3 rows
+    # Grid layout: 2 columns, 4 rows
     col_gap = 7.0 * mm
-    row_gap = 8.0 * mm
+    row_gap = 6.0 * mm
 
     total_grid_width = 2 * CARD_WIDTH + col_gap
     start_x = (page_width - total_grid_width) / 2.0  # Center horizontally
 
-    total_grid_height = 3 * CARD_HEIGHT + 2 * row_gap
-    start_y = (page_height + total_grid_height) / 2.0 - CARD_HEIGHT  # Top row y
+    # 4 rows layout: fit up to 8 cards comfortably on 1 single A4 page
+    start_y = 211.0 * mm
 
     # Optional header title at top of sheet
     can.saveState()
     can.setFillColor(COLOR_PRIMARY)
     can.setFont("Helvetica-Bold", 10)
-    can.drawCentredString(page_width / 2.0, page_height - 14 * mm, "INDIAN GEMOLOGICAL INSTITUTE — ID CARD PRINT SHEET")
+    can.drawCentredString(page_width / 2.0, page_height - 10 * mm, "INDIAN GEMOLOGICAL INSTITUTE — ID CARD PRINT SHEET")
     can.setFillColor(COLOR_GRAY)
     can.setFont("Helvetica", 7)
-    can.drawCentredString(page_width / 2.0, page_height - 18 * mm, f"A4 Sheet • {len(selected)} Card(s) on 1 Page")
+    can.drawCentredString(page_width / 2.0, page_height - 14 * mm, f"A4 Sheet • {len(selected)} Card(s) on 1 Page")
     can.restoreState()
 
     for idx, cert in enumerate(selected):
-        row = idx // 2  # 0, 1, 2
+        row = idx // 2  # 0, 1, 2, 3
         col = idx % 2   # 0, 1
 
         x = start_x + col * (CARD_WIDTH + col_gap)

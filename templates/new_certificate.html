@@ -195,11 +195,11 @@
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-600 mb-1.5">Weight (Carat) *</label>
-                <input type="number" name="weight_carat" step="0.01" min="0.01" required
+                <label class="block text-sm font-medium text-gray-600 mb-1.5">Weight *</label>
+                <input type="text" inputmode="text" name="weight_carat" required
                   value="{{ cert.weight_carat if cert else '' }}"
                   class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
-                  placeholder="e.g. 2.45"/>
+                  placeholder="e.g. 2.45 or 2.45 ct"/>
               </div>
 
               <div>
