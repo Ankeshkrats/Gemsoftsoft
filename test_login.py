@@ -8,14 +8,16 @@ class TestFreshAtlasSystem(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # Reset everything to fresh state for testing
-        db_mongo.reset_all_data(keep_gemstones=True)
         init_db()
+        # Clean only test user if left over
+        db = db_mongo.get_db()
+        db.users.delete_many({'username': {'$in': ['ankesh_director', 'test_user_setup']}})
 
     @classmethod
     def tearDownClass(cls):
-        # Leave database 100% clean for the user
-        db_mongo.reset_all_data(keep_gemstones=True)
+        # Clean only test artifacts
+        db = db_mongo.get_db()
+        db.users.delete_many({'username': {'$in': ['ankesh_director', 'test_user_setup']}})
 
     def setUp(self):
         app.config['TESTING'] = True

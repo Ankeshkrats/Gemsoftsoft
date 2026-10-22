@@ -73,6 +73,30 @@ def serialize_doc(doc):
 def get_next_sequence(sequence_name: str) -> int:
     """Generate safe atomic sequential IDs for certificates, users, etc."""
     db = get_db()
+
+    # Self-healing counter initialization to prevent DuplicateKeyError collisions
+    start_seq = 0
+    if sequence_name == 'gemstone_library':
+        max_doc = db.gemstone_library.find_one(sort=[('id', -1)])
+        if max_doc and 'id' in max_doc:
+            start_seq = int(max_doc['id'])
+    elif sequence_name == 'certificates':
+        max_doc = db.certificates.find_one(sort=[('id', -1)])
+        if max_doc and 'id' in max_doc:
+            start_seq = int(max_doc['id'])
+    elif sequence_name == 'users':
+        max_doc = db.users.find_one(sort=[('id', -1)])
+        if max_doc and 'id' in max_doc:
+            start_seq = int(max_doc['id'])
+
+    counter = db.counters.find_one({'_id': sequence_name})
+    if counter is None or int(counter.get('seq', 0)) < start_seq:
+        db.counters.update_one(
+            {'_id': sequence_name},
+            {'$set': {'seq': start_seq}},
+            upsert=True
+        )
+
     ret = db.counters.find_one_and_update(
         {'_id': sequence_name},
         {'$inc': {'seq': 1}},
@@ -210,9 +234,7 @@ def insert_certificate(cert_data: dict) -> int:
     Only the short filename string (or empty string) is stored.
     """
     db = get_db()
-    new_id = get_next_sequence('certificates')
     doc = dict(cert_data)
-    doc['id'] = new_id
 
     # Strictly protect MongoDB Atlas space: ensure no binary or base64 image data is stored
     for prohibited in ['image_data', 'image_base64', 'image_binary', 'file_bytes']:
@@ -224,8 +246,17 @@ def insert_certificate(cert_data: dict) -> int:
     if isinstance(img_path, str) and (img_path.startswith('data:image') or len(img_path) > 255):
         doc['image_path'] = ''
 
-    db.certificates.insert_one(doc)
-    return new_id
+    while True:
+        try:
+            new_id = get_next_sequence('certificates')
+            doc['id'] = new_id
+            db.certificates.insert_one(doc)
+            return new_id
+        except pymongo.errors.DuplicateKeyError:
+            # Sync counter to actual max ID and retry
+            max_doc = db.certificates.find_one(sort=[('id', -1)])
+            highest_id = int(max_doc.get('id', 0)) if max_doc else 0
+            db.counters.update_one({'_id': 'certificates'}, {'$set': {'seq': highest_id}}, upsert=True)
 
 
 def update_certificate_qr(cert_id: int, qr_code_path: str, qr_payload: str) -> bool:
@@ -268,23 +299,66 @@ def get_active_gemstones():
 
 
 def get_gemstone_by_name(name: str):
+    if not name:
+        return None
     db = get_db()
+    clean = name.strip()
     doc = db.gemstone_library.find_one({
-        'name': {'$regex': f"^{re.escape(name.strip())}$", '$options': 'i'},
+        'name': {'$regex': f"^{re.escape(clean)}$", '$options': 'i'},
         'is_active': 1
     })
-    return serialize_doc(doc) if doc else None
+    if doc:
+        return serialize_doc(doc)
+
+    # Check if exists in library but deactivated; reactivate it seamlessly
+    doc_inactive = db.gemstone_library.find_one({
+        'name': {'$regex': f"^{re.escape(clean)}$", '$options': 'i'}
+    })
+    if doc_inactive:
+        db.gemstone_library.update_one({'_id': doc_inactive['_id']}, {'$set': {'is_active': 1}})
+        doc_inactive['is_active'] = 1
+        return serialize_doc(doc_inactive)
+
+    return None
 
 
 def insert_custom_gemstone(gem_data: dict) -> int:
     db = get_db()
-    new_id = get_next_sequence('gemstone_library')
     doc = dict(gem_data)
-    doc['id'] = new_id
+    clean_name = str(doc.get('name', '')).strip()
+    doc['name'] = clean_name
     doc['is_custom'] = 1
     doc['is_active'] = 1
-    db.gemstone_library.insert_one(doc)
-    return new_id
+
+    # Check if duplicate exists before insert (case-insensitive)
+    existing = db.gemstone_library.find_one({
+        'name': {'$regex': f"^{re.escape(clean_name)}$", '$options': 'i'}
+    })
+    if existing:
+        if not existing.get('is_active'):
+            db.gemstone_library.update_one({'_id': existing['_id']}, {'$set': {'is_active': 1}})
+        return int(existing.get('id', 0))
+
+    while True:
+        try:
+            new_id = get_next_sequence('gemstone_library')
+            doc['id'] = new_id
+            db.gemstone_library.insert_one(doc)
+            return new_id
+        except pymongo.errors.DuplicateKeyError:
+            # Check if name caused duplicate
+            existing_name = db.gemstone_library.find_one({
+                'name': {'$regex': f"^{re.escape(clean_name)}$", '$options': 'i'}
+            })
+            if existing_name:
+                if not existing_name.get('is_active'):
+                    db.gemstone_library.update_one({'_id': existing_name['_id']}, {'$set': {'is_active': 1}})
+                return int(existing_name.get('id', 0))
+
+            # ID collision: sync counter to actual max ID and retry
+            max_doc = db.gemstone_library.find_one(sort=[('id', -1)])
+            highest_id = int(max_doc.get('id', 0)) if max_doc else 0
+            db.counters.update_one({'_id': 'gemstone_library'}, {'$set': {'seq': highest_id}}, upsert=True)
 
 
 def deactivate_gemstone(gem_id: int) -> bool:

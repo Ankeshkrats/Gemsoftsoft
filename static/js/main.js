@@ -58,8 +58,19 @@ function clearAutofill() {
  */
 async function addGemstoneInline() {
   const input = document.getElementById('new_gemstone_name_input');
+  const btn = document.getElementById('save_gemstone_btn');
   const name  = (input?.value || '').trim();
-  if (!name) { showToast('Please enter a gemstone name.', 'error'); return; }
+  if (!name) {
+    showToast('Please enter a gemstone name.', 'error');
+    if (input) input.focus();
+    return;
+  }
+
+  const origBtnText = btn ? btn.innerHTML : 'Save &amp; Use';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="inline-flex items-center gap-1.5"><svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>Saving…</span>`;
+  }
 
   try {
     const res = await fetch('/api/gemstone/add', {
@@ -69,28 +80,48 @@ async function addGemstoneInline() {
     });
     const data = await res.json();
 
-    if (data.error) {
+    if (data.error && !data.already_exists) {
       showToast(data.error, 'error');
       return;
     }
 
-    // Inject as new option before "__other__"
+    const savedName = data.name || name;
+
+    // Inject or select in dropdown
     const sel = document.getElementById('gemstone_name');
-    const otherOpt = sel.querySelector('option[value="__other__"]');
-    const newOpt = document.createElement('option');
-    newOpt.value    = name;
-    newOpt.textContent = `${name} ★`;
-    newOpt.selected = true;
-    sel.insertBefore(newOpt, otherOpt);
+    if (sel) {
+      let existingOpt = Array.from(sel.options).find(o => (o.value || '').trim().toLowerCase() === savedName.toLowerCase());
+      if (!existingOpt) {
+        const otherOpt = sel.querySelector('option[value="__other__"]');
+        const newOpt = document.createElement('option');
+        newOpt.value    = savedName;
+        newOpt.textContent = `${savedName} ★`;
+        sel.insertBefore(newOpt, otherOpt);
+        existingOpt = newOpt;
+      }
+
+      // Explicitly update select value & selectedIndex (required for mobile iOS/Android)
+      existingOpt.selected = true;
+      sel.value = existingOpt.value;
+      sel.selectedIndex = existingOpt.index;
+
+      // Trigger change event so any autofill/listeners update
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+    }
 
     // Hide the "other" input and clear it
     const wrap = document.getElementById('other-gemstone-wrap');
     if (wrap) wrap.style.display = 'none';
     if (input) input.value = '';
 
-    showToast(`"${name}" added and selected!`, 'success');
-  } catch {
+    showToast(`"${savedName}" selected!`, 'success');
+  } catch (err) {
     showToast('Failed to add gemstone. Please try again.', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origBtnText;
+    }
   }
 }
 
@@ -266,8 +297,7 @@ function filterTable() {
 function showToast(msg, type = 'info') {
   const colors = { success: 'bg-green-600', error: 'bg-red-600', info: 'bg-blue-600' };
   const toast  = document.createElement('div');
-  toast.className = `fixed bottom-6 right-6 z-50 px-5 py-3 rounded-lg text-white text-sm shadow-lg
-    fade-in ${colors[type] || colors.info}`;
+  toast.className = `fixed top-5 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl text-white text-sm font-semibold shadow-2xl transition-all duration-300 max-w-[90vw] text-center fade-in ${colors[type] || colors.info}`;
   toast.textContent = msg;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3500);
@@ -602,6 +632,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const otherWrap = document.getElementById('other-gemstone-wrap');
   if (sel && otherWrap && sel.value === '__other__') {
     otherWrap.style.display = 'block';
+  }
+
+  // Form submit handling for New Certificate
+  const newCertForm = document.getElementById('new-cert-form');
+  if (newCertForm) {
+    newCertForm.addEventListener('submit', (e) => {
+      const sel = document.getElementById('gemstone_name');
+      const otherInput = document.getElementById('new_gemstone_name_input');
+      const otherVal = (otherInput?.value || '').trim();
+
+      // If user selected '__other__' and did not type a name, stop and warn
+      if (sel && sel.value === '__other__' && !otherVal) {
+        e.preventDefault();
+        showToast('Please enter a name for the new gemstone.', 'error');
+        if (otherInput) otherInput.focus();
+        return;
+      }
+
+      // Visual feedback on submit button
+      const submitBtn = document.getElementById('generate_cert_btn');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span class="inline-flex items-center gap-2"><svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>Generating Certificate…</span>`;
+      }
+    });
   }
 
   // Mobile sidebar drawer event listeners

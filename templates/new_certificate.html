@@ -120,7 +120,7 @@
         {% endfor %}
       {% endwith %}
 
-      <form method="POST" action="/certificate/new" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <form id="new-cert-form" method="POST" action="/certificate/new" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
         <!-- Left Column: Customer & Gemstone -->
@@ -184,10 +184,11 @@
                 <label class="block text-sm font-medium text-gray-600 mb-1.5">New Gemstone Name *</label>
                 <div class="flex flex-col sm:flex-row gap-2">
                   <input type="text" id="new_gemstone_name_input" name="new_gemstone_name"
+                    onkeydown="if(event.key === 'Enter'){ event.preventDefault(); addGemstoneInline(); }"
                     class="flex-1 border border-[#c9a84c] rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#c9a84c]"
                     placeholder="e.g. Jeremejevite"/>
-                  <button type="button" onclick="addGemstoneInline()"
-                    class="bg-[#c9a84c] hover:bg-[#b8963e] text-[#1e3a5f] px-4 py-2.5 rounded-lg text-sm font-semibold transition flex-shrink-0 min-h-[40px]">
+                  <button type="button" id="save_gemstone_btn" onclick="addGemstoneInline()"
+                    class="bg-[#c9a84c] hover:bg-[#b8963e] active:scale-95 text-[#1e3a5f] px-5 py-2.5 rounded-lg text-sm font-bold transition flex-shrink-0 min-h-[44px] flex items-center justify-center cursor-pointer shadow-sm">
                     Save &amp; Use
                   </button>
                 </div>
@@ -309,8 +310,8 @@
           <!-- Submit -->
           {% if not cert %}
           <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
-            <button type="submit"
-              class="w-full bg-[#1e3a5f] hover:bg-[#162d4d] text-white font-semibold py-3.5 px-4 rounded-lg transition shadow-md hover:shadow-lg text-sm tracking-wide min-h-[44px]">
+            <button type="submit" id="generate_cert_btn"
+              class="w-full bg-[#1e3a5f] hover:bg-[#162d4d] active:scale-95 text-white font-semibold py-3.5 px-4 rounded-lg transition shadow-md hover:shadow-lg text-sm tracking-wide min-h-[48px] flex items-center justify-center gap-2 cursor-pointer">
               💎 Generate Certificate
             </button>
             <p class="text-xs text-gray-400 text-center mt-2">

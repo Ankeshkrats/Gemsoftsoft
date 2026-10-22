@@ -414,24 +414,29 @@ def new_certificate():
 
         # Handle "other" gemstone
         if gemstone_name == '__other__':
-            if not new_gemstone_input:
+            clean_new = new_gemstone_input.strip()
+            if not clean_new:
                 flash('Please enter a name for the new gemstone type.', 'error')
                 return render_template('new_certificate.html', gemstones=gemstones, cert=None, institute=INSTITUTE_NAME)
-            # Validate not duplicate (case-insensitive)
-            existing_gem = db_mongo.get_gemstone_by_name(new_gemstone_input)
+
+            # Check if gemstone already exists in library (case-insensitive)
+            existing_gem = db_mongo.get_gemstone_by_name(clean_new)
             if existing_gem:
-                flash(f'Gemstone "{new_gemstone_input}" already exists in the library.', 'error')
-                return render_template('new_certificate.html', gemstones=gemstones, cert=None, institute=INSTITUTE_NAME)
-            # Save custom gemstone in MongoDB Atlas
-            db_mongo.insert_custom_gemstone({
-                'name': new_gemstone_input,
-                'refractive_index': refractive_index,
-                'specific_gravity': specific_gravity,
-                'hardness': hardness,
-                'chemical_formula': chemical_formula,
-                'crystal_system': crystal_system
-            })
-            gemstone_name = new_gemstone_input
+                gemstone_name = existing_gem['name']
+            else:
+                try:
+                    db_mongo.insert_custom_gemstone({
+                        'name': clean_new,
+                        'refractive_index': refractive_index,
+                        'specific_gravity': specific_gravity,
+                        'hardness': hardness,
+                        'chemical_formula': chemical_formula,
+                        'crystal_system': crystal_system
+                    })
+                    gemstone_name = clean_new
+                except Exception as e:
+                    app.logger.error(f"Error inserting gemstone '{clean_new}': {e}")
+                    gemstone_name = clean_new
 
         if not customer_name or not gemstone_name:
             flash('Customer Name and Gemstone Name are required.', 'error')
@@ -744,11 +749,11 @@ def api_gemstone(name):
 
 # ── API: Add Custom Gemstone ──────────────────────────────────────────────────
 @app.route('/api/gemstone/add', methods=['POST'])
-@login_required
 @csrf.exempt
+@login_required
 def api_add_gemstone():
-    data = request.get_json() or {}
-    name = (data.get('name') or '').strip()
+    data = request.get_json(silent=True) or {}
+    name = (data.get('name') or request.form.get('name') or '').strip()
     if not name:
         return jsonify({'error': 'Gemstone name is required'}), 400
     if len(name) > 100:
@@ -756,17 +761,26 @@ def api_add_gemstone():
 
     existing = db_mongo.get_gemstone_by_name(name)
     if existing:
-        return jsonify({'error': f'Gemstone "{name}" already exists'}), 409
+        return jsonify({
+            'success': True,
+            'id': existing.get('id'),
+            'name': existing.get('name', name),
+            'already_exists': True
+        })
 
-    gid = db_mongo.insert_custom_gemstone({
-        'name': name,
-        'refractive_index': data.get('refractive_index', ''),
-        'specific_gravity': data.get('specific_gravity', ''),
-        'hardness':         data.get('hardness', ''),
-        'chemical_formula': data.get('chemical_formula', ''),
-        'crystal_system':   data.get('crystal_system', '')
-    })
-    return jsonify({'success': True, 'id': gid, 'name': name})
+    try:
+        gid = db_mongo.insert_custom_gemstone({
+            'name': name,
+            'refractive_index': data.get('refractive_index', ''),
+            'specific_gravity': data.get('specific_gravity', ''),
+            'hardness':         data.get('hardness', ''),
+            'chemical_formula': data.get('chemical_formula', ''),
+            'crystal_system':   data.get('crystal_system', '')
+        })
+        return jsonify({'success': True, 'id': gid, 'name': name})
+    except Exception as e:
+        app.logger.error(f"Failed to add gemstone: {e}")
+        return jsonify({'error': f'Failed to add gemstone: {str(e)}'}), 500
 
 
 # ── API: Deactivate Custom Gemstone ──────────────────────────────────────────
