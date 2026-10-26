@@ -84,14 +84,14 @@
         <span class="text-base">💳</span>
         <span>
           {% if is_merged %}
-            <strong>{{ certs|length }} cards merged</strong> onto 1 A4 page (max 8). Click <strong>"Save Merged PDF"</strong> to download directly.
+            <strong>{{ certs|length }} cards merged</strong> onto 1 A4 page (max 10). Click <strong>"Save Merged PDF"</strong> to download directly.
           {% else %}
             Standard ATM Card size (85.6 × 54 mm). Click <strong>"Save PDF"</strong> to download directly without print setup.
           {% endif %}
         </span>
       </div>
       {% if is_merged %}
-      <span class="text-xs bg-blue-200/70 text-blue-800 font-semibold px-2 py-0.5 rounded self-start sm:self-auto">1 A4 Page</span>
+      <span class="text-xs bg-blue-200/70 text-blue-800 font-semibold px-2 py-0.5 rounded self-start sm:self-auto">1 A4 Page (Up to 10)</span>
       {% endif %}
     </div>
   </div>
@@ -102,20 +102,30 @@
       {% for c in certs %}
       <div class="label-card">
 
-        <!-- ① Header: IGI logo + institute name -->
+        <!-- ① Header: IGI logo + institute name + security badge -->
         <div class="label-top-header">
-          <img src="/static/logo.jpeg"
-               alt="IGI"
-               class="label-header-logo"
-               onerror="this.style.display='none'"/>
-          <div style="min-width:0;">
-            <div class="label-lab-name">Indian Gemological Institute</div>
-            <div class="label-lab-address">{{ lab_address }}</div>
+          <div class="label-logo-wrap">
+            <img src="/static/logo.jpeg"
+                 alt="IGI"
+                 class="label-header-logo"
+                 onerror="this.style.display='none'"/>
+          </div>
+          <div class="label-header-center">
+            <div class="label-lab-name">INDIAN GEMOLOGICAL INSTITUTE</div>
+            <div class="label-lab-address">INTERNATIONAL GEM TESTING LABORATORY</div>
+          </div>
+          <div class="label-header-right">
+            <span class="label-badge-authentic">✓ AUTHENTIC</span>
+            <span class="label-badge-iso">ISO 9001:2015</span>
           </div>
         </div>
 
-        <!-- ② Blue title strip -->
-        <div class="label-title-bar">Gemstone Identification Card</div>
+        <!-- ② Blue title strip with gold accents -->
+        <div class="label-title-bar">
+          <span class="label-title-dot"></span>
+          <span>GEMSTONE IDENTIFICATION REPORT</span>
+          <span class="label-title-dot"></span>
+        </div>
 
         <!-- ③ Body -->
         <div class="label-body">
@@ -127,77 +137,87 @@
               <img src="/static/logo.jpeg" alt=""/>
             </div>
 
-            <div class="label-row">
-              <span class="label-key">Name</span>
+            <div class="label-row zebra-0">
+              <span class="label-key">Gemstone</span>
               <span class="label-colon">:</span>
-              <span class="label-val">{{ c.gemstone_name }}</span>
+              <span class="label-val val-name">{{ c.gemstone_name }}</span>
             </div>
-            <div class="label-row">
-              <span class="label-key">Cert No.</span>
+            <div class="label-row zebra-1">
+              <span class="label-key">Report No.</span>
               <span class="label-colon">:</span>
-              <span class="label-val normal">{{ c.report_number }}</span>
+              <span class="label-val val-cert">{{ c.report_number }}</span>
             </div>
-            <div class="label-row">
+            <div class="label-row zebra-0">
               <span class="label-key">Weight</span>
               <span class="label-colon">:</span>
-              <span class="label-val normal">{% if c.weight_carat %}{{ c.weight_carat }}{% else %}……{% endif %}</span>
+              <span class="label-val val-bold">{% if c.weight_carat %}{{ c.weight_carat }}{% if not ('ct' in c.weight_carat|string|lower) %} ct{% endif %}{% else %}—{% endif %}</span>
             </div>
-            <div class="label-row">
+            <div class="label-row zebra-1">
               <span class="label-key">Shape / Cut</span>
               <span class="label-colon">:</span>
-              <span class="label-val normal">{% if c.shape_cut %}{{ c.shape_cut }}{% else %}……{% endif %}</span>
+              <span class="label-val val-bold">{% if c.shape_cut %}{{ c.shape_cut }}{% else %}—{% endif %}</span>
             </div>
-            <div class="label-row">
+            <div class="label-row zebra-0">
               <span class="label-key">Colour</span>
               <span class="label-colon">:</span>
-              <span class="label-val normal">{% if c.color %}{{ c.color }}{% else %}……{% endif %}</span>
+              <span class="label-val val-bold">{% if c.color %}{{ c.color }}{% else %}—{% endif %}</span>
             </div>
-            <div class="label-row">
-              <span class="label-key">Refractive Idx</span>
+            <div class="label-row zebra-1">
+              <span class="label-key">Refractive</span>
               <span class="label-colon">:</span>
-              <span class="label-val normal">{% if c.refractive_index %}{{ c.refractive_index }}{% else %}……{% endif %}</span>
+              <span class="label-val val-bold">{% if c.refractive_index %}{{ c.refractive_index }}{% else %}—{% endif %}</span>
             </div>
-            <div class="label-row">
+            <div class="label-row zebra-0">
               <span class="label-key">Hardness</span>
               <span class="label-colon">:</span>
-              <span class="label-val normal">{% if c.hardness %}{{ c.hardness }}{% else %}……{% endif %}</span>
+              <span class="label-val val-bold">{% if c.hardness %}{{ c.hardness }}{% else %}—{% endif %}</span>
             </div>
-            <div class="label-row">
+            <div class="label-row zebra-1">
               <span class="label-key">Clarity</span>
               <span class="label-colon">:</span>
-              <span class="label-val normal">{% if c.clarity %}{{ c.clarity }}{% else %}Transparent{% endif %}</span>
+              <span class="label-val val-bold">{% if c.clarity %}{{ c.clarity }}{% else %}Transparent{% endif %}</span>
             </div>
-            <div class="label-row">
-              <span class="label-key">Comment</span>
+            <div class="label-row zebra-0">
+              <span class="label-key">Comments</span>
               <span class="label-colon">:</span>
-              <span class="label-val normal">{% if c.comments %}{{ c.comments }}{% elif c.crystal_system %}{{ c.crystal_system }}{% else %}..{% endif %}</span>
+              <span class="label-val val-comment">{% if c.comments %}{{ c.comments }}{% elif c.crystal_system %}{{ c.crystal_system }}{% else %}None{% endif %}</span>
             </div>
-            <div class="label-row">
+            <div class="label-row zebra-1">
               <span class="label-key">Issued To</span>
               <span class="label-colon">:</span>
-              <span class="label-val normal">{% if c.customer_name %}{{ c.customer_name }}{% else %}N/A{% endif %}</span>
+              <span class="label-val val-bold">{% if c.customer_name %}{{ c.customer_name }}{% else %}N/A{% endif %}</span>
             </div>
           </div>
 
-          <!-- Right: QR + gem image + gemologist -->
+          <!-- Right: Enlarged QR + Scan Pill + Gem Photo + Gemologist -->
           <div class="label-right">
-            {% if c.qr_code_path %}
-            <img src="/static/uploads/qrcodes/{{ c.qr_code_path }}"
-              class="label-qr" alt="QR"/>
-            {% else %}
-            <div class="label-qr bg-gray-100 flex items-center justify-center text-gray-300 text-xs rounded">QR</div>
-            {% endif %}
+            <div class="label-qr-wrap">
+              {% if c.qr_code_path %}
+              <img src="/static/uploads/qrcodes/{{ c.qr_code_path }}"
+                class="label-qr" alt="QR"/>
+              {% else %}
+              <div class="label-qr bg-gray-100 flex items-center justify-center text-gray-400 font-bold text-xs rounded">QR</div>
+              {% endif %}
+            </div>
 
-            {% if c.image_path %}
-            <img src="/static/uploads/{{ c.image_path }}"
-              class="label-gem-img" alt="{{ c.gemstone_name }}"/>
-            {% else %}
-            <div class="label-gem-img flex items-center justify-center bg-gray-50 text-gray-300 text-lg">💎</div>
-            {% endif %}
+            <!-- Sleek Scan Pill -->
+            <div class="label-scan-pill">SCAN TO VERIFY</div>
+
+            <div class="label-gem-wrap">
+              {% if c.image_path %}
+              <img src="/static/uploads/{{ c.image_path }}"
+                class="label-gem-img" alt="{{ c.gemstone_name }}"/>
+              {% else %}
+              <div class="label-gem-placeholder">
+                <span class="gem-symbol">◆</span>
+                <span class="gem-label">GEM PHOTO</span>
+              </div>
+              {% endif %}
+            </div>
 
             <div class="label-signature">
-              {{ session.full_name if session.full_name else 'Gemologist' }}<br>
-              <span style="font-size:4pt;font-style:normal;">Gemologist</span>
+              <div class="sig-name">{{ session.full_name if session.full_name else 'Gemologist' }}</div>
+              <div class="sig-title">Certified Gemologist</div>
             </div>
           </div>
 

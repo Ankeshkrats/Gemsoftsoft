@@ -1,49 +1,55 @@
-"""
-Card PDF Generator for Indian Gemological Institute
-Generates single CR-80 card PDFs (85.6mm x 54mm) and merged 8-card A4 PDFs (2x4 grid)
-using ReportLab with exact dimensions, colors, logos, and QR codes.
-"""
-
 import os
-from io import BytesIO
+import pypdfium2 as pdfium
 from PIL import Image as PILImage
 from reportlab.lib.units import mm
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
-from reportlab.graphics.shapes import Drawing, Rect
 
-# Exact ATM / ISO CR-80 card dimensions
+BASE_DIR = r"C:\Users\LENOVO\Desktop\Gemsoftsoft"
 CARD_WIDTH  = 85.6 * mm
 CARD_HEIGHT = 54.0 * mm
 
-# Color palette
-COLOR_PRIMARY = colors.HexColor('#1e3a5f')
-COLOR_ACCENT  = colors.HexColor('#c9a84c')
-COLOR_RED     = colors.HexColor('#c0392b')
-COLOR_GRAY    = colors.HexColor('#555555')
-COLOR_LIGHT   = colors.HexColor('#f8fafc')
-COLOR_BORDER  = colors.HexColor('#cccccc')
-
+# Premium color palette for highest print contrast & luxury certificate look
+COLOR_PRIMARY   = colors.HexColor('#0c2340')  # Deep Royal Imperial Navy
+COLOR_NAVY_LIGHT= colors.HexColor('#163b66')  # Sapphire Blue
+COLOR_ACCENT    = colors.HexColor('#c49a45')  # Rich Warm Gold
+COLOR_ACCENT_BG = colors.HexColor('#fcfaf5')  # Subtle gold tint
+COLOR_RED       = colors.HexColor('#b91c1c')  # Deep Ruby Red
+COLOR_TEXT_DARK = colors.HexColor('#0f172a')  # Slate 900 (ultra high contrast)
+COLOR_TEXT_MID  = colors.HexColor('#334155')  # Slate 700
+COLOR_BORDER    = colors.HexColor('#cbd5e1')  # Slate 300
+COLOR_CARD_BORDER = colors.HexColor('#0c2340')
+COLOR_ZEBRA     = colors.HexColor('#f8fafc')  # Alternating row background
 
 def draw_card(c: canvas.Canvas, x: float, y: float, cert: dict, base_dir: str = '.', gemologist_name: str = 'Gemologist'):
     """
     Draw a single ID card at position (x, y) with dimensions 85.6mm x 54mm.
     (x, y) is the bottom-left corner of the card.
+    High-contrast, bold typography, enlarged QR code, luxury security styling.
     """
     c.saveState()
 
-    # 1. Card Outer Container & Clipping
-    c.setStrokeColor(COLOR_BORDER)
+    # 1. Outer Card Container
     c.setFillColor(colors.white)
-    c.setLineWidth(0.6)
-    c.roundRect(x, y, CARD_WIDTH, CARD_HEIGHT, 2 * mm, fill=1, stroke=1)
+    c.setStrokeColor(COLOR_CARD_BORDER)
+    c.setLineWidth(0.8)
+    c.roundRect(x, y, CARD_WIDTH, CARD_HEIGHT, 2.5 * mm, fill=1, stroke=1)
+
+    # Inner decorative gold hairline security border
+    c.setStrokeColor(COLOR_ACCENT)
+    c.setLineWidth(0.35)
+    c.roundRect(x + 0.8 * mm, y + 0.8 * mm, CARD_WIDTH - 1.6 * mm, CARD_HEIGHT - 1.6 * mm, 2.0 * mm, fill=0, stroke=1)
 
     # 2. Top Header (Logo + Institute Title)
-    header_height = 8.5 * mm
+    header_height = 9.2 * mm
     header_y = y + CARD_HEIGHT - header_height
 
-    # Optimized logo thumbnail for small fast PDF
+    # Top header soft ivory/white background
+    c.setFillColor(colors.HexColor('#fbfcfd'))
+    c.rect(x + 0.8 * mm, header_y, CARD_WIDTH - 1.6 * mm, header_height - 0.8 * mm, fill=1, stroke=0)
+
+    # Logo
     thumb_path = os.path.join(base_dir, 'static', 'logo_card_thumb.png')
     logo_path  = os.path.join(base_dir, 'static', 'logo.jpeg')
     active_logo = None
@@ -52,64 +58,91 @@ def draw_card(c: canvas.Canvas, x: float, y: float, cert: dict, base_dir: str = 
     elif os.path.exists(logo_path):
         try:
             pil_img = PILImage.open(logo_path)
-            pil_img.thumbnail((250, 250), PILImage.Resampling.LANCZOS)
+            pil_img.thumbnail((300, 300), PILImage.Resampling.LANCZOS)
             pil_img.save(thumb_path, optimize=True)
             active_logo = thumb_path
         except Exception:
             active_logo = logo_path
 
-    if active_logo and os.path.exists(active_logo):
-        try:
-            c.drawImage(active_logo, x + 1.8 * mm, header_y + 0.8 * mm,
-                        width=7.0 * mm, height=7.0 * mm, preserveAspectRatio=True, mask='auto')
-        except Exception:
-            pass
+    logo_size = 7.6 * mm
+    logo_x = x + 2.2 * mm
+    logo_y = header_y + 0.8 * mm
 
-    # Header text
-    c.setFillColor(COLOR_PRIMARY)
-    c.setFont("Helvetica-Bold", 8.4)
-    c.drawString(x + 10.0 * mm, header_y + 4.6 * mm, "Indian Gemological Institute")
-
-    c.setFillColor(COLOR_GRAY)
-    c.setFont("Helvetica", 4.0)
-    c.drawString(x + 10.0 * mm, header_y + 1.6 * mm, "Gemological Testing Lab")
-
-    # Header underline
-    c.setStrokeColor(COLOR_PRIMARY)
-    c.setLineWidth(1.0)
-    c.line(x, header_y, x + CARD_WIDTH, header_y)
-
-    # 3. Blue Title Bar
-    title_height = 3.8 * mm
-    title_y = header_y - title_height
-    c.setFillColor(COLOR_PRIMARY)
-    c.rect(x, title_y, CARD_WIDTH, title_height, fill=1, stroke=0)
-
-    c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", 5.2)
-    c.drawCentredString(x + CARD_WIDTH / 2.0, title_y + 1.1 * mm, "GEMSTONE IDENTIFICATION CARD")
-
-    # 4. Body Area
-    body_y = y
-    body_height = title_y - y
-
-    # Right column boundary
-    right_col_width = 21.0 * mm
-    right_col_x = x + CARD_WIDTH - right_col_width
-
-    # Separator between left fields and right photos
-    c.setStrokeColor(colors.HexColor('#e2e8f0'))
-    c.setLineWidth(0.5)
-    c.line(right_col_x, body_y, right_col_x, title_y)
-
-    # 4A. Left: Watermark (semi-transparent logo behind fields)
     if active_logo and os.path.exists(active_logo):
         try:
             c.saveState()
-            c.setFillAlpha(0.12)
-            watermark_size = 30 * mm
+            c.drawImage(active_logo, logo_x, logo_y,
+                        width=logo_size, height=logo_size, preserveAspectRatio=True, mask='auto')
+            # Gold circular ring
+            c.setStrokeColor(COLOR_ACCENT)
+            c.setLineWidth(0.5)
+            c.circle(logo_x + logo_size / 2.0, logo_y + logo_size / 2.0, logo_size / 2.0 + 0.2 * mm, fill=0, stroke=1)
+            c.restoreState()
+        except Exception:
+            pass
+
+    # Header Text
+    text_x = logo_x + logo_size + 2.0 * mm
+
+    c.setFillColor(COLOR_PRIMARY)
+    c.setFont("Helvetica-Bold", 8.8)
+    c.drawString(text_x, header_y + 4.8 * mm, "INDIAN GEMOLOGICAL INSTITUTE")
+
+    c.setFillColor(COLOR_ACCENT)
+    c.setFont("Helvetica-Bold", 4.8)
+    c.drawString(text_x, header_y + 2.0 * mm, "INTERNATIONAL GEM TESTING LABORATORY")
+
+    # Right side security badges in header
+    c.setFillColor(COLOR_PRIMARY)
+    c.setFont("Helvetica-Bold", 4.2)
+    c.drawRightString(x + CARD_WIDTH - 2.5 * mm, header_y + 2.0 * mm, "ISO 9001:2015")
+    c.setFillColor(colors.HexColor('#15803d'))
+    c.drawRightString(x + CARD_WIDTH - 2.5 * mm, header_y + 4.8 * mm, "✓ AUTHENTIC")
+
+    # Header underline: Navy + Gold accent bar
+    c.setStrokeColor(COLOR_PRIMARY)
+    c.setLineWidth(0.8)
+    c.line(x + 0.8 * mm, header_y, x + CARD_WIDTH - 0.8 * mm, header_y)
+    c.setStrokeColor(COLOR_ACCENT)
+    c.setLineWidth(0.4)
+    c.line(x + 0.8 * mm, header_y - 0.3 * mm, x + CARD_WIDTH - 0.8 * mm, header_y - 0.3 * mm)
+
+    # 3. Title Bar (Banner)
+    title_height = 3.6 * mm
+    title_y = header_y - 0.4 * mm - title_height
+    c.setFillColor(COLOR_PRIMARY)
+    c.rect(x + 0.8 * mm, title_y, CARD_WIDTH - 1.6 * mm, title_height, fill=1, stroke=0)
+
+    # Gold corner accents on title bar
+    c.setFillColor(COLOR_ACCENT)
+    c.rect(x + 1.2 * mm, title_y + 0.6 * mm, 1.8 * mm, title_height - 1.2 * mm, fill=1, stroke=0)
+    c.rect(x + CARD_WIDTH - 3.0 * mm, title_y + 0.6 * mm, 1.8 * mm, title_height - 1.2 * mm, fill=1, stroke=0)
+
+    c.setFillColor(colors.white)
+    c.setFont("Helvetica-Bold", 5.8)
+    c.drawCentredString(x + CARD_WIDTH / 2.0, title_y + 1.0 * mm, "GEMSTONE IDENTIFICATION REPORT")
+
+    # 4. Body Area
+    body_y = y + 0.8 * mm
+    body_height = title_y - body_y
+
+    # Right column boundary (expanded to 25.5mm)
+    right_col_width = 25.5 * mm
+    right_col_x = x + CARD_WIDTH - 0.8 * mm - right_col_width
+
+    # Separator line
+    c.setStrokeColor(COLOR_BORDER)
+    c.setLineWidth(0.5)
+    c.line(right_col_x, body_y, right_col_x, title_y)
+
+    # 4A. Left: Watermark (0.07 opacity so text prints razor sharp)
+    if active_logo and os.path.exists(active_logo):
+        try:
+            c.saveState()
+            c.setFillAlpha(0.07)
+            watermark_size = 28 * mm
             c.drawImage(active_logo,
-                        x + (CARD_WIDTH - right_col_width - watermark_size) / 2.0,
+                        x + 2.0 * mm + (right_col_x - x - 2.0 * mm - watermark_size) / 2.0,
                         body_y + (body_height - watermark_size) / 2.0,
                         width=watermark_size, height=watermark_size,
                         preserveAspectRatio=True, mask='auto')
@@ -118,108 +151,149 @@ def draw_card(c: canvas.Canvas, x: float, y: float, cert: dict, base_dir: str = 
             pass
 
     # 4B. Left: Field Rows (10 rows)
-    # Fields formatting: weight has NO 'ct', crystal sys is replaced by 'Comment'
     gem_name   = (cert.get('gemstone_name') or 'Gemstone')[:24]
     rep_num    = (cert.get('report_number') or '')[:18]
-    weight_val = str(cert.get('weight_carat') or '')  # NO 'ct'
+    raw_wt     = str(cert.get('weight_carat') or '')
+    if raw_wt and not any(unit in raw_wt.lower() for unit in ['ct', 'cts', 'carat']):
+        weight_val = raw_wt + ' ct'
+    else:
+        weight_val = raw_wt or '—'
+
     shape_val  = (cert.get('shape_cut') or '—')[:22]
     color_val  = (cert.get('color') or '—')[:22]
     ri_val     = (cert.get('refractive_index') or '—')[:18]
     hard_val   = (cert.get('hardness') or '—')[:16]
     clar_val   = (cert.get('clarity') or 'Transparent')[:22]
-    comm_val   = (cert.get('comments') or cert.get('crystal_system') or '..')[:24]
+    comm_val   = (cert.get('comments') or cert.get('crystal_system') or 'None')[:24]
     issued_val = (cert.get('customer_name') or 'N/A')[:22]
 
     fields = [
-        ("Name",        gem_name,   COLOR_RED,     True),
-        ("Cert No.",    rep_num,    COLOR_PRIMARY, False),
-        ("Weight",      weight_val, colors.black,  False),
-        ("Shape / Cut", shape_val,  colors.black,  False),
-        ("Colour",      color_val,  colors.black,  False),
-        ("Refractive",  ri_val,     colors.black,  False),
-        ("Hardness",    hard_val,   colors.black,  False),
-        ("Clarity",     clar_val,   colors.black,  False),
-        ("Comment",     comm_val,   colors.black,  False),
-        ("Issued To",   issued_val, colors.black,  False),
+        ("Gemstone",    gem_name,   COLOR_RED,                  6.6),
+        ("Report No.",  rep_num,    COLOR_PRIMARY,              6.2),
+        ("Weight",      weight_val, COLOR_TEXT_DARK,            6.2),
+        ("Shape / Cut", shape_val,  COLOR_TEXT_DARK,            6.0),
+        ("Colour",      color_val,  COLOR_TEXT_DARK,            6.0),
+        ("Refractive",  ri_val,     COLOR_TEXT_DARK,            6.0),
+        ("Hardness",    hard_val,   COLOR_TEXT_DARK,            6.0),
+        ("Clarity",     clar_val,   COLOR_TEXT_DARK,            6.0),
+        ("Comments",    comm_val,   colors.HexColor('#92400e'), 5.8),
+        ("Issued To",   issued_val, COLOR_TEXT_DARK,            5.8),
     ]
 
-    field_start_x = x + 1.8 * mm
+    field_start_x = x + 2.2 * mm
     colon_x       = field_start_x + 16.5 * mm
     val_x         = colon_x + 2.0 * mm
-    row_height    = 3.8 * mm
-    curr_y        = title_y - 3.4 * mm
+    row_height    = 3.7 * mm
+    curr_y        = title_y - 3.2 * mm
 
-    for key, val, val_color, is_bold in fields:
-        # Key
-        c.setFillColor(colors.HexColor('#333333'))
-        c.setFont("Helvetica-Bold", 4.9)
+    # Zebra striping for easy reading
+    left_width = right_col_x - (x + 0.8 * mm)
+    for i in range(len(fields)):
+        row_top = title_y - (i * row_height)
+        if i % 2 == 1:
+            c.setFillColor(COLOR_ZEBRA)
+            c.rect(x + 0.8 * mm, row_top - row_height, left_width, row_height, fill=1, stroke=0)
+
+    # Field text
+    for key, val, val_color, val_size in fields:
+        c.setFillColor(COLOR_TEXT_DARK)
+        c.setFont("Helvetica-Bold", 5.6)
         c.drawString(field_start_x, curr_y, key)
 
-        # Colon
+        c.setFillColor(COLOR_TEXT_MID)
+        c.setFont("Helvetica-Bold", 5.6)
         c.drawString(colon_x, curr_y, ":")
 
-        # Value
         c.setFillColor(val_color)
-        c.setFont("Helvetica-Bold" if is_bold else "Helvetica", 4.9)
+        c.setFont("Helvetica-Bold", val_size)
         c.drawString(val_x, curr_y, str(val))
 
         curr_y -= row_height
 
-    # 4C. Right Column (QR code + Gem image + Gemologist signature)
+    # 4C. Right Column (Large QR + Scan Pill + Gem Photo + Gemologist)
     right_mid_x = right_col_x + (right_col_width / 2.0)
 
-    # 1) QR code at top of right column
+    # 1) Large QR Code (16.5mm x 16.5mm)
+    qr_size = 16.5 * mm
+    qr_x = right_mid_x - qr_size / 2.0
+    qr_y = title_y - qr_size - 1.0 * mm
+
+    # Clean white background card with border
+    c.setFillColor(colors.white)
+    c.setStrokeColor(COLOR_BORDER)
+    c.setLineWidth(0.4)
+    c.roundRect(qr_x - 0.4 * mm, qr_y - 0.4 * mm, qr_size + 0.8 * mm, qr_size + 0.8 * mm, 1.0 * mm, fill=1, stroke=1)
+
     qr_file = cert.get('qr_code_path')
     qr_drawn = False
     if qr_file:
         qr_full = os.path.join(base_dir, 'static', 'uploads', 'qrcodes', qr_file)
         if os.path.exists(qr_full):
             try:
-                qr_size = 13.5 * mm
-                c.drawImage(qr_full, right_mid_x - qr_size / 2.0, title_y - qr_size - 1.2 * mm,
+                c.drawImage(qr_full, qr_x, qr_y,
                             width=qr_size, height=qr_size, preserveAspectRatio=True)
                 qr_drawn = True
             except Exception:
                 pass
     if not qr_drawn:
-        # Draw placeholder
         c.setStrokeColor(COLOR_BORDER)
-        c.rect(right_mid_x - 6 * mm, title_y - 14 * mm, 12 * mm, 12 * mm, fill=0, stroke=1)
-        c.setFont("Helvetica", 4)
-        c.drawCentredString(right_mid_x, title_y - 8 * mm, "QR CODE")
+        c.rect(qr_x, qr_y, qr_size, qr_size, fill=0, stroke=1)
+        c.setFillColor(COLOR_TEXT_MID)
+        c.setFont("Helvetica-Bold", 5.0)
+        c.drawCentredString(right_mid_x, qr_y + qr_size / 2.0 - 1.5 * mm, "QR CODE")
 
-    # 2) Gem photo in middle of right column
+    # 2) Sleek "SCAN TO VERIFY" badge pill
+    pill_w = 19.0 * mm
+    pill_h = 2.5 * mm
+    pill_x = right_mid_x - pill_w / 2.0
+    pill_y = qr_y - pill_h - 0.8 * mm
+
+    c.setFillColor(COLOR_PRIMARY)
+    c.setStrokeColor(COLOR_ACCENT)
+    c.setLineWidth(0.3)
+    c.roundRect(pill_x, pill_y, pill_w, pill_h, 0.8 * mm, fill=1, stroke=1)
+
+    c.setFillColor(colors.white)
+    c.setFont("Helvetica-Bold", 4.0)
+    c.drawCentredString(right_mid_x, pill_y + 0.7 * mm, "SCAN TO VERIFY")
+
+    # 3) Gem Photo (11.5mm x 11.5mm)
+    gem_size = 11.5 * mm
+    gem_box_x = right_mid_x - gem_size / 2.0
+    gem_box_y = y + 6.5 * mm
+
     img_file = cert.get('image_path')
     img_drawn = False
-    gem_box_y = y + 7.5 * mm
-    gem_size  = 12.0 * mm
     if img_file:
         img_full = os.path.join(base_dir, 'static', 'uploads', img_file)
         if os.path.exists(img_full):
             try:
-                c.drawImage(img_full, right_mid_x - gem_size / 2.0, gem_box_y,
+                c.drawImage(img_full, gem_box_x, gem_box_y,
                             width=gem_size, height=gem_size, preserveAspectRatio=True)
                 c.setStrokeColor(COLOR_BORDER)
                 c.setLineWidth(0.4)
-                c.rect(right_mid_x - gem_size / 2.0, gem_box_y, gem_size, gem_size, fill=0, stroke=1)
+                c.roundRect(gem_box_x, gem_box_y, gem_size, gem_size, 0.8 * mm, fill=0, stroke=1)
                 img_drawn = True
             except Exception:
                 pass
     if not img_drawn:
         c.setStrokeColor(COLOR_BORDER)
-        c.setFillColor(COLOR_LIGHT)
-        c.rect(right_mid_x - gem_size / 2.0, gem_box_y, gem_size, gem_size, fill=1, stroke=1)
-        c.setFillColor(colors.HexColor('#888888'))
-        c.setFont("Helvetica", 4.5)
-        c.drawCentredString(right_mid_x, gem_box_y + 5.0 * mm, "GEM IMAGE")
+        c.setFillColor(COLOR_ZEBRA)
+        c.roundRect(gem_box_x, gem_box_y, gem_size, gem_size, 0.8 * mm, fill=1, stroke=1)
+        c.setFillColor(COLOR_ACCENT)
+        c.setFont("Helvetica-Bold", 9.0)
+        c.drawCentredString(right_mid_x, gem_box_y + 4.5 * mm, "◆")
+        c.setFillColor(COLOR_TEXT_MID)
+        c.setFont("Helvetica-Bold", 3.8)
+        c.drawCentredString(right_mid_x, gem_box_y + 1.6 * mm, "GEM PHOTO")
 
-    # 3) Gemologist signature text at bottom
+    # 4) Gemologist Signature & Seal
     c.setFillColor(COLOR_PRIMARY)
-    c.setFont("Helvetica-BoldOblique", 4.4)
+    c.setFont("Helvetica-BoldOblique", 4.8)
     c.drawCentredString(right_mid_x, y + 4.0 * mm, (gemologist_name or 'Gemologist')[:16])
-    c.setFillColor(COLOR_GRAY)
-    c.setFont("Helvetica", 3.5)
-    c.drawCentredString(right_mid_x, y + 1.8 * mm, "Certified Gemologist")
+    c.setFillColor(COLOR_TEXT_MID)
+    c.setFont("Helvetica-Bold", 3.6)
+    c.drawCentredString(right_mid_x, y + 2.0 * mm, "Certified Gemologist")
 
     c.restoreState()
 
@@ -238,45 +312,64 @@ def generate_single_card_pdf(cert: dict, output_stream_or_path, base_dir: str = 
 
 def generate_merged_cards_pdf(certs: list, output_stream_or_path, base_dir: str = '.', gemologist_name: str = 'Gemologist'):
     """
-    Generate an A4 page containing up to 8 cards in a 2-column x 4-row grid.
-    Strictly 1 single A4 page.
+    Generate an A4 page containing up to 10 cards in a 2-column x 5-row grid.
+    Strictly 1 single A4 page with trim guide marks.
     """
     can = canvas.Canvas(output_stream_or_path, pagesize=A4)
-    can.setTitle("Gemstone ID Cards - Merged Sheet")
+    can.setTitle("Gemstone ID Cards - Merged Sheet (10 Cards)")
 
     page_width, page_height = A4  # 210mm x 297mm
 
-    # Limit to max 8 cards for 1 page
-    selected = certs[:8]
+    # Limit to max 10 cards for 1 page
+    selected = certs[:10]
 
-    # Grid layout: 2 columns, 4 rows
-    col_gap = 7.0 * mm
-    row_gap = 6.0 * mm
+    # Grid layout: 2 columns, 5 rows
+    col_gap = 6.0 * mm
+    row_gap = 2.4 * mm
 
     total_grid_width = 2 * CARD_WIDTH + col_gap
     start_x = (page_width - total_grid_width) / 2.0  # Center horizontally
 
-    # 4 rows layout: fit up to 8 cards comfortably on 1 single A4 page
-    start_y = 211.0 * mm
+    # 5 rows layout: fit up to 10 cards comfortably on 1 single A4 page
+    start_y = 234.0 * mm
 
-    # Optional header title at top of sheet
+    # Top header on print sheet
     can.saveState()
     can.setFillColor(COLOR_PRIMARY)
-    can.setFont("Helvetica-Bold", 10)
-    can.drawCentredString(page_width / 2.0, page_height - 10 * mm, "INDIAN GEMOLOGICAL INSTITUTE — ID CARD PRINT SHEET")
-    can.setFillColor(COLOR_GRAY)
-    can.setFont("Helvetica", 7)
-    can.drawCentredString(page_width / 2.0, page_height - 14 * mm, f"A4 Sheet • {len(selected)} Card(s) on 1 Page")
+    can.setFont("Helvetica-Bold", 7.5)
+    can.drawCentredString(page_width / 2.0, page_height - 5.5 * mm, "INDIAN GEMOLOGICAL INSTITUTE — ID CARD PRINT SHEET")
+    can.setFillColor(COLOR_TEXT_MID)
+    can.setFont("Helvetica", 5.2)
+    can.drawCentredString(page_width / 2.0, page_height - 7.8 * mm, f"A4 Standard Sheet • {len(selected)} Card(s) on 1 Page • Cut Along Card Borders")
     can.restoreState()
 
     for idx, cert in enumerate(selected):
-        row = idx // 2  # 0, 1, 2, 3
+        row = idx // 2  # 0, 1, 2, 3, 4
         col = idx % 2   # 0, 1
 
         x = start_x + col * (CARD_WIDTH + col_gap)
         y = start_y - row * (CARD_HEIGHT + row_gap)
 
         draw_card(can, x, y, cert, base_dir=base_dir, gemologist_name=gemologist_name)
+
+        # Subtle cutting guide marks in corners of card for print trimming
+        can.saveState()
+        can.setStrokeColor(COLOR_BORDER)
+        can.setLineWidth(0.3)
+        mark_len = 1.5 * mm
+        # Top-left
+        can.line(x - 0.5 * mm - mark_len, y + CARD_HEIGHT, x - 0.5 * mm, y + CARD_HEIGHT)
+        can.line(x, y + CARD_HEIGHT + 0.5 * mm, x, y + CARD_HEIGHT + 0.5 * mm + mark_len)
+        # Top-right
+        can.line(x + CARD_WIDTH + 0.5 * mm, y + CARD_HEIGHT, x + CARD_WIDTH + 0.5 * mm + mark_len, y + CARD_HEIGHT)
+        can.line(x + CARD_WIDTH, y + CARD_HEIGHT + 0.5 * mm, x + CARD_WIDTH, y + CARD_HEIGHT + 0.5 * mm + mark_len)
+        # Bottom-left
+        can.line(x - 0.5 * mm - mark_len, y, x - 0.5 * mm, y)
+        can.line(x, y - 0.5 * mm - mark_len, x, y - 0.5 * mm)
+        # Bottom-right
+        can.line(x + CARD_WIDTH + 0.5 * mm, y, x + CARD_WIDTH + 0.5 * mm + mark_len, y)
+        can.line(x + CARD_WIDTH, y - 0.5 * mm - mark_len, x + CARD_WIDTH, y - 0.5 * mm)
+        can.restoreState()
 
     # Strictly 1 page
     can.showPage()

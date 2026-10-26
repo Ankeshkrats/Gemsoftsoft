@@ -645,7 +645,7 @@ def download_card_pdf(cert_id):
     )
 
 
-# ── Merged Cards (Max 8) View ─────────────────────────────────────────────────
+# ── Merged Cards (Max 10) View ────────────────────────────────────────────────
 @app.route('/labels/merge')
 @login_required
 def merge_labels():
@@ -663,8 +663,8 @@ def merge_labels():
         flash('Invalid certificate IDs.', 'error')
         return redirect(url_for('dashboard'))
 
-    if len(id_list) > 8:
-        id_list = id_list[:8]
+    if len(id_list) > 10:
+        id_list = id_list[:10]
 
     certs = []
     for cid in id_list:
@@ -684,7 +684,7 @@ def merge_labels():
                            lab_address='Gemological Testing Lab')
 
 
-# ── Merged Cards (Max 8) PDF Download ─────────────────────────────────────────
+# ── Merged Cards (Max 10) PDF Download ────────────────────────────────────────
 @app.route('/labels/merge/pdf')
 @login_required
 def download_merged_cards_pdf():
@@ -702,8 +702,8 @@ def download_merged_cards_pdf():
         flash('Invalid certificate IDs.', 'error')
         return redirect(url_for('dashboard'))
 
-    if len(id_list) > 8:
-        id_list = id_list[:8]
+    if len(id_list) > 10:
+        id_list = id_list[:10]
 
     certs = []
     for cid in id_list:

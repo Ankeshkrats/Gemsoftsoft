@@ -202,7 +202,7 @@ class TestMobileResponsive(unittest.TestCase):
             sess['username'] = 'test_gemologist'
             sess['full_name'] = 'Test Gemologist'
 
-        certs = db_mongo.get_all_certificates()[:6]
+        certs = db_mongo.get_all_certificates()[:10]
         if certs:
             ids_str = ','.join(str(c['id']) for c in certs)
 
@@ -218,6 +218,12 @@ class TestMobileResponsive(unittest.TestCase):
             self.assertEqual(res_pdf.status_code, 200)
             self.assertEqual(res_pdf.headers['Content-Type'], 'application/pdf')
             self.assertTrue(len(res_pdf.data) > 1000)
+
+            # Verify it generates exactly 1 A4 page
+            from pypdf import PdfReader
+            from io import BytesIO
+            reader = PdfReader(BytesIO(res_pdf.data))
+            self.assertEqual(len(reader.pages), 1)
 
     def test_11_single_card_pdf_download(self):
         with self.client.session_transaction() as sess:
