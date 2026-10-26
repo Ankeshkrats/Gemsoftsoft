@@ -404,6 +404,7 @@ def new_certificate():
         weight_carat     = request.form.get('weight_carat', '0')
         shape_cut        = request.form.get('shape_cut', '').strip()
         color            = request.form.get('color', '').strip()
+        clarity          = request.form.get('clarity', '').strip()
         comments         = request.form.get('comments', '').strip()
         refractive_index = request.form.get('refractive_index', '').strip()
         specific_gravity = request.form.get('specific_gravity', '').strip()
@@ -460,6 +461,7 @@ def new_certificate():
             'weight_carat': weight_carat,
             'shape_cut': shape_cut,
             'color': color,
+            'clarity': clarity,
             'refractive_index': refractive_index,
             'specific_gravity': specific_gravity,
             'hardness': hardness,
@@ -479,6 +481,7 @@ def new_certificate():
             'weight_carat': weight_carat,
             'shape_cut': shape_cut,
             'color': color,
+            'clarity': clarity,
             'comments': comments,
             'refractive_index': refractive_index,
             'specific_gravity': specific_gravity,
@@ -561,6 +564,7 @@ def clone_certificate(cert_id):
             'weight_carat': src['weight_carat'],
             'shape_cut': src.get('shape_cut'),
             'color': src.get('color'),
+            'clarity': src.get('clarity'),
             'refractive_index': src.get('refractive_index'),
             'specific_gravity': src.get('specific_gravity'),
             'hardness': src.get('hardness'),
@@ -579,6 +583,7 @@ def clone_certificate(cert_id):
             'weight_carat': src['weight_carat'],
             'shape_cut': src.get('shape_cut'),
             'color': src.get('color'),
+            'clarity': src.get('clarity'),
             'comments': src.get('comments'),
             'refractive_index': src.get('refractive_index'),
             'specific_gravity': src.get('specific_gravity'),
@@ -783,14 +788,62 @@ def api_add_gemstone():
         return jsonify({'error': f'Failed to add gemstone: {str(e)}'}), 500
 
 
-# ── API: Deactivate Custom Gemstone ──────────────────────────────────────────
+# ── API: Get Active Gemstones List ──────────────────────────────────────────
+@app.route('/api/gemstones')
+@login_required
+def api_get_gemstones():
+    gems = db_mongo.get_active_gemstones()
+    return jsonify({
+        'gemstones': [
+            {
+                'id': g.get('id'),
+                'name': g.get('name'),
+                'is_custom': bool(g.get('is_custom')),
+                'refractive_index': g.get('refractive_index', ''),
+                'specific_gravity': g.get('specific_gravity', ''),
+                'hardness': g.get('hardness', ''),
+                'chemical_formula': g.get('chemical_formula', ''),
+                'crystal_system': g.get('crystal_system', '')
+            }
+            for g in gems
+        ]
+    })
+
+
+# ── API: Remove / Deactivate Any Gemstone ────────────────────────────────────
+@app.route('/api/gemstone/remove', methods=['POST'])
+@login_required
+@csrf.exempt
+def api_remove_gemstone():
+    data = request.get_json(silent=True) or {}
+    name = (data.get('name') or request.form.get('name') or '').strip()
+    gem_id = data.get('id') or request.form.get('id')
+    if not name and not gem_id:
+        return jsonify({'error': 'Gemstone name or ID is required'}), 400
+
+    success = False
+    if gem_id:
+        try:
+            success = db_mongo.deactivate_gemstone(int(gem_id))
+        except (ValueError, TypeError):
+            pass
+    if not success and name:
+        success = db_mongo.deactivate_gemstone_by_name(name)
+
+    if not success:
+        return jsonify({'error': f"Gemstone '{name or gem_id}' not found in library"}), 404
+
+    return jsonify({'success': True, 'name': name, 'message': f"Gemstone '{name or gem_id}' removed successfully"})
+
+
+# ── API: Deactivate Gemstone by ID ───────────────────────────────────────────
 @app.route('/api/gemstone/<int:gem_id>/deactivate', methods=['POST'])
 @login_required
 @csrf.exempt
 def api_deactivate_gemstone(gem_id):
     success = db_mongo.deactivate_gemstone(gem_id)
     if not success:
-        return jsonify({'error': 'Custom gemstone not found'}), 404
+        return jsonify({'error': 'Gemstone not found'}), 404
     return jsonify({'success': True})
 
 
@@ -859,6 +912,7 @@ def api_verify():
         'weight_carat':     cert['weight_carat'],
         'shape_cut':        cert.get('shape_cut'),
         'color':            cert.get('color'),
+        'clarity':          cert.get('clarity'),
         'comments':         cert.get('comments'),
         'refractive_index': cert.get('refractive_index'),
         'specific_gravity': cert.get('specific_gravity'),

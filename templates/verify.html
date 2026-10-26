@@ -112,6 +112,11 @@
               </div>
 
               <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">
+                <span class="font-semibold text-gray-500">Clarity:</span>
+                <span class="text-gray-900 block sm:inline">{{ cert.clarity or 'Transparent' }}</span>
+              </div>
+
+              <div class="flex justify-between sm:block border-b sm:border-0 pb-1 sm:pb-0">
                 <span class="font-semibold text-gray-500">Refractive Index:</span>
                 <span class="text-gray-900 font-mono block sm:inline">{{ cert.refractive_index or '—' }}</span>
               </div>

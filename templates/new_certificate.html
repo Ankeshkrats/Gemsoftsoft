@@ -157,26 +157,40 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <!-- Gemstone Name -->
               <div class="col-span-1 sm:col-span-2">
-                <label class="block text-sm font-medium text-gray-600 mb-1.5">Gemstone Name *</label>
-                <select name="gemstone_name" id="gemstone_name" required
-                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] bg-white">
-                  <option value="">— Select Gemstone —</option>
-                  {% set has_custom = namespace(value=false) %}
-                  {% for gem in gemstones %}
-                    {% if gem.is_custom and not has_custom.value %}
-                      {% set has_custom.value = true %}
-                      <option disabled>── Custom Gemstones ──</option>
+                <div class="flex items-center justify-between mb-1.5">
+                  <label class="block text-sm font-medium text-gray-600">Gemstone Name *</label>
+                  <button type="button" onclick="openGemstoneModal()"
+                    class="text-xs font-semibold text-[#1e3a5f] hover:text-[#c9a84c] flex items-center gap-1 transition cursor-pointer">
+                    <span>⚙️</span> Manage / Remove Options
+                  </button>
+                </div>
+                <div class="flex gap-2">
+                  <select name="gemstone_name" id="gemstone_name" required
+                    class="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] bg-white">
+                    <option value="">— Select Gemstone —</option>
+                    {% set has_custom = namespace(value=false) %}
+                    {% for gem in gemstones %}
+                      {% if gem.is_custom and not has_custom.value %}
+                        {% set has_custom.value = true %}
+                        <option disabled>── Custom Gemstones ──</option>
+                      {% endif %}
+                      <option value="{{ gem.name }}" data-id="{{ gem.id }}" {% if cert and cert.gemstone_name == gem.name %}selected{% endif %}>
+                        {{ gem.name }}{% if gem.is_custom %} ★{% endif %}
+                      </option>
+                    {% endfor %}
+                    <!-- If editing and gemstone not in library, pre-select it -->
+                    {% if cert and cert.gemstone_name and not gemstones | selectattr('name', 'equalto', cert.gemstone_name) | list %}
+                      <option value="{{ cert.gemstone_name }}" selected>{{ cert.gemstone_name }}</option>
                     {% endif %}
-                    <option value="{{ gem.name }}" {% if cert and cert.gemstone_name == gem.name %}selected{% endif %}>
-                      {{ gem.name }}{% if gem.is_custom %} ★{% endif %}
-                    </option>
-                  {% endfor %}
-                  <!-- If editing and gemstone not in library, pre-select it -->
-                  {% if cert and cert.gemstone_name and not gemstones | selectattr('name', 'equalto', cert.gemstone_name) | list %}
-                    <option value="{{ cert.gemstone_name }}" selected>{{ cert.gemstone_name }}</option>
-                  {% endif %}
-                  <option value="__other__">➕ Other / Add New Gemstone…</option>
-                </select>
+                    <option value="__other__">➕ Other / Add New Gemstone…</option>
+                  </select>
+                  <!-- Quick remove button for currently selected gemstone -->
+                  <button type="button" id="remove-gemstone-btn" onclick="removeSelectedGemstone()" style="display:none;"
+                    title="Remove selected gemstone from library"
+                    class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-2.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer flex-shrink-0" aria-label="Remove gemstone from list">
+                    <span>🗑️</span> <span class="hidden sm:inline">Remove</span>
+                  </button>
+                </div>
               </div>
 
               <!-- "Other" input — shown only when __other__ is selected -->
@@ -220,7 +234,15 @@
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-600 mb-1.5">Clarity / Comments</label>
+                <label class="block text-sm font-medium text-gray-600 mb-1.5">Clarity</label>
+                <input type="text" name="clarity"
+                  value="{{ cert.clarity if cert else '' }}"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
+                  placeholder="e.g. Transparent / Eye Clean"/>
+              </div>
+
+              <div class="col-span-1 sm:col-span-2">
+                <label class="block text-sm font-medium text-gray-600 mb-1.5">Comments</label>
                 <input type="text" name="comments"
                   value="{{ cert.comments if cert else '' }}"
                   class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
@@ -343,6 +365,54 @@
       </form>
     </div>
   </main>
+
+  <!-- Manage Gemstones Modal -->
+  <div id="gemstone-manage-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm" style="display:none;">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col overflow-hidden border border-gray-100 animate-fade-in">
+      
+      <!-- Modal Header -->
+      <div class="px-5 py-4 bg-[#1e3a5f] text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">💎</span>
+          <div>
+            <h3 class="font-bold text-base leading-tight">Gemstone Reference Library</h3>
+            <p class="text-xs text-blue-200">Remove any gemstone option from the list</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeGemstoneModal()" class="text-white/70 hover:text-white p-1 rounded-lg transition" aria-label="Close modal">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Search Filter Bar -->
+      <div class="p-3.5 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+        <div class="relative flex-1">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 pointer-events-none text-xs">🔍</span>
+          <input type="text" id="gemstone-search-filter" oninput="filterGemstoneModalList(this.value)"
+            placeholder="Search gemstone name..."
+            class="w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] bg-white"/>
+        </div>
+        <span id="gemstone-count-badge" class="self-center text-xs font-semibold px-2.5 py-2 bg-blue-100 text-[#1e3a5f] rounded-lg whitespace-nowrap">
+          0 gems
+        </span>
+      </div>
+
+      <!-- Scrollable Gemstone Items List -->
+      <div class="flex-1 overflow-y-auto p-3 divide-y divide-gray-100 min-h-[200px]" id="gemstone-modal-list">
+        <div class="text-center py-8 text-gray-400 text-sm">Loading gemstones...</div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+        <span class="text-xs text-gray-500">Removed items are hidden immediately</span>
+        <button type="button" onclick="closeGemstoneModal()"
+          class="px-4 py-2 bg-[#1e3a5f] hover:bg-[#162c46] text-white rounded-lg text-sm font-semibold transition cursor-pointer">
+          Done
+        </button>
+      </div>
+
+    </div>
+  </div>
 
   <script src="/static/js/main.js"></script>
 </body>

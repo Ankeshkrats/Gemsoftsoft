@@ -19,9 +19,19 @@ const autofillFields = {
 };
 
 if (gemstoneSelect) {
+  function updateGemstoneRemoveBtn() {
+    const val = gemstoneSelect.value;
+    const removeBtn = document.getElementById('remove-gemstone-btn');
+    if (removeBtn) {
+      removeBtn.style.display = (val && val !== '__other__') ? 'inline-flex' : 'none';
+    }
+  }
+
   gemstoneSelect.addEventListener('change', async () => {
     const name = gemstoneSelect.value;
     const otherWrap = document.getElementById('other-gemstone-wrap');
+
+    updateGemstoneRemoveBtn();
 
     // Show/hide "Add New Gemstone" input
     if (otherWrap) {
@@ -44,6 +54,9 @@ if (gemstoneSelect) {
       clearAutofill();
     }
   });
+
+  // Initial check on page load
+  updateGemstoneRemoveBtn();
 }
 
 function clearAutofill() {
@@ -123,6 +136,188 @@ async function addGemstoneInline() {
       btn.innerHTML = origBtnText;
     }
   }
+}
+
+/**
+ * Remove currently selected gemstone from dropdown & database
+ */
+async function removeSelectedGemstone() {
+  const sel = document.getElementById('gemstone_name');
+  if (!sel) return;
+  const name = (sel.value || '').trim();
+  if (!name || name === '__other__') return;
+
+  if (!confirm(`Are you sure you want to remove "${name}" from the gemstone list?`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/gemstone/remove', {
+      method: 'POST',
+      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ name }),
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      showToast(data.error, 'error');
+      return;
+    }
+
+    // Remove option from dropdown
+    const opt = Array.from(sel.options).find(o => (o.value || '').trim().toLowerCase() === name.toLowerCase());
+    if (opt) opt.remove();
+
+    sel.value = '';
+    clearAutofill();
+    const removeBtn = document.getElementById('remove-gemstone-btn');
+    if (removeBtn) removeBtn.style.display = 'none';
+
+    showToast(`"${name}" removed from gemstone list`, 'success');
+  } catch (err) {
+    showToast('Failed to remove gemstone. Please try again.', 'error');
+  }
+}
+
+/**
+ * Gemstone Library Modal Management
+ */
+let cachedGemstoneList = [];
+
+async function openGemstoneModal() {
+  const modal = document.getElementById('gemstone-manage-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+
+  const filterInput = document.getElementById('gemstone-search-filter');
+  if (filterInput) filterInput.value = '';
+
+  await loadGemstonesForModal();
+}
+
+function closeGemstoneModal() {
+  const modal = document.getElementById('gemstone-manage-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function loadGemstonesForModal() {
+  const listEl = document.getElementById('gemstone-modal-list');
+  const badgeEl = document.getElementById('gemstone-count-badge');
+  if (listEl) {
+    listEl.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">Loading gemstones...</div>';
+  }
+
+  try {
+    const res = await fetch('/api/gemstones');
+    const data = await res.json();
+    cachedGemstoneList = data.gemstones || [];
+    renderGemstoneModalList(cachedGemstoneList);
+  } catch (err) {
+    if (listEl) {
+      listEl.innerHTML = '<div class="text-center py-6 text-red-500 text-sm">Failed to load gemstone list.</div>';
+    }
+  }
+}
+
+function filterGemstoneModalList(query) {
+  const q = (query || '').trim().toLowerCase();
+  if (!q) {
+    renderGemstoneModalList(cachedGemstoneList);
+  } else {
+    const filtered = cachedGemstoneList.filter(g => (g.name || '').toLowerCase().includes(q));
+    renderGemstoneModalList(filtered);
+  }
+}
+
+function renderGemstoneModalList(gemstones) {
+  const listEl = document.getElementById('gemstone-modal-list');
+  const badgeEl = document.getElementById('gemstone-count-badge');
+  if (!listEl) return;
+
+  if (badgeEl) {
+    badgeEl.textContent = `${gemstones.length} gem${gemstones.length === 1 ? '' : 's'}`;
+  }
+
+  if (!gemstones.length) {
+    listEl.innerHTML = '<div class="text-center py-8 text-gray-400 text-sm">No gemstones found</div>';
+    return;
+  }
+
+  listEl.innerHTML = gemstones.map(gem => `
+    <div class="flex items-center justify-between py-2.5 px-2 hover:bg-slate-50 rounded-lg transition gap-3" id="gem-item-${gem.id || encodeURIComponent(gem.name)}">
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="font-semibold text-sm text-[#1e3a5f]">${escapeHtml(gem.name)}</span>
+          ${gem.is_custom ? '<span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">Custom ★</span>' : '<span class="text-[10px] bg-gray-100 text-gray-600 font-medium px-1.5 py-0.5 rounded">Standard</span>'}
+        </div>
+        ${gem.chemical_formula || gem.refractive_index ? `
+          <p class="text-xs text-gray-400 truncate mt-0.5 font-mono">
+            ${gem.chemical_formula ? `Formula: ${escapeHtml(gem.chemical_formula)}` : ''} 
+            ${gem.refractive_index ? `· RI: ${escapeHtml(gem.refractive_index)}` : ''}
+          </p>
+        ` : ''}
+      </div>
+      <button type="button" onclick="removeGemstoneItem('${escapeJs(gem.name)}', ${gem.id || 'null'})"
+        class="bg-red-50 hover:bg-red-100 active:scale-95 text-red-600 p-2 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer flex-shrink-0"
+        title="Remove ${escapeHtml(gem.name)} from list">
+        <span>🗑️</span> <span class="hidden sm:inline">Delete</span>
+      </button>
+    </div>
+  `).join('');
+}
+
+async function removeGemstoneItem(name, id) {
+  if (!confirm(`Are you sure you want to remove "${name}" from the gemstone list?`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/gemstone/remove', {
+      method: 'POST',
+      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ name, id }),
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      showToast(data.error, 'error');
+      return;
+    }
+
+    // Remove from cached list and re-render modal
+    cachedGemstoneList = cachedGemstoneList.filter(g => (g.name || '').toLowerCase() !== name.toLowerCase());
+    const filterInput = document.getElementById('gemstone-search-filter');
+    filterGemstoneModalList(filterInput ? filterInput.value : '');
+
+    // Also remove from the select dropdown on the page
+    const sel = document.getElementById('gemstone_name');
+    if (sel) {
+      const opt = Array.from(sel.options).find(o => (o.value || '').trim().toLowerCase() === name.toLowerCase());
+      if (opt) {
+        if (sel.value === opt.value) {
+          sel.value = '';
+          clearAutofill();
+          const removeBtn = document.getElementById('remove-gemstone-btn');
+          if (removeBtn) removeBtn.style.display = 'none';
+        }
+        opt.remove();
+      }
+    }
+
+    showToast(`"${name}" removed successfully`, 'success');
+  } catch (err) {
+    showToast('Failed to remove gemstone. Please try again.', 'error');
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function escapeJs(str) {
+  if (!str) return '';
+  return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
 }
 
 /* =====================================================

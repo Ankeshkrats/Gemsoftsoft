@@ -58,15 +58,24 @@ def draw_card(c: canvas.Canvas, x: float, y: float, cert: dict, base_dir: str = 
     elif os.path.exists(logo_path):
         try:
             pil_img = PILImage.open(logo_path)
-            pil_img.thumbnail((300, 300), PILImage.Resampling.LANCZOS)
-            pil_img.save(thumb_path, optimize=True)
-            active_logo = thumb_path
+            bbox = pil_img.getbbox()
+            if bbox:
+                cropped = pil_img.crop(bbox)
+                w, h = cropped.size
+                max_dim = max(w, h)
+                square_img = PILImage.new('RGBA', (max_dim, max_dim), (255, 255, 255, 0))
+                square_img.paste(cropped, ((max_dim - w) // 2, (max_dim - h) // 2))
+                square_img.thumbnail((512, 512), PILImage.Resampling.LANCZOS)
+                square_img.save(thumb_path, optimize=True)
+                active_logo = thumb_path
+            else:
+                active_logo = logo_path
         except Exception:
             active_logo = logo_path
 
-    logo_size = 7.6 * mm
-    logo_x = x + 2.2 * mm
-    logo_y = header_y + 0.8 * mm
+    logo_size = 8.2 * mm
+    logo_x = x + 2.0 * mm
+    logo_y = header_y + 0.5 * mm
 
     if active_logo and os.path.exists(active_logo):
         try:
@@ -76,13 +85,13 @@ def draw_card(c: canvas.Canvas, x: float, y: float, cert: dict, base_dir: str = 
             # Gold circular ring
             c.setStrokeColor(COLOR_ACCENT)
             c.setLineWidth(0.5)
-            c.circle(logo_x + logo_size / 2.0, logo_y + logo_size / 2.0, logo_size / 2.0 + 0.2 * mm, fill=0, stroke=1)
+            c.circle(logo_x + logo_size / 2.0, logo_y + logo_size / 2.0, logo_size / 2.0 + 0.15 * mm, fill=0, stroke=1)
             c.restoreState()
         except Exception:
             pass
 
     # Header Text
-    text_x = logo_x + logo_size + 2.0 * mm
+    text_x = logo_x + logo_size + 1.8 * mm
 
     c.setFillColor(COLOR_PRIMARY)
     c.setFont("Helvetica-Bold", 8.8)

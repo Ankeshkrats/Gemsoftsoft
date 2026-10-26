@@ -363,5 +363,17 @@ def insert_custom_gemstone(gem_data: dict) -> int:
 
 def deactivate_gemstone(gem_id: int) -> bool:
     db = get_db()
-    res = db.gemstone_library.update_one({'id': int(gem_id), 'is_custom': 1}, {'$set': {'is_active': 0}})
+    res = db.gemstone_library.update_one({'id': int(gem_id)}, {'$set': {'is_active': 0}})
+    return res.matched_count > 0
+
+
+def deactivate_gemstone_by_name(name: str) -> bool:
+    if not name:
+        return False
+    db = get_db()
+    clean = name.strip()
+    res = db.gemstone_library.update_one(
+        {'name': {'$regex': f"^{re.escape(clean)}$", '$options': 'i'}},
+        {'$set': {'is_active': 0}}
+    )
     return res.matched_count > 0

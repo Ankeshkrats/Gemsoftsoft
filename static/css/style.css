@@ -244,21 +244,30 @@
 
 /* Logo in ID card header */
 .label-logo-wrap {
-  width: 7.8mm;
-  height: 7.8mm;
-  border-radius: 50%;
-  border: 0.6px solid #c49a45;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  background: #fff;
+  width: 8.6mm !important;
+  height: 8.6mm !important;
+  min-width: 8.6mm !important;
+  min-height: 8.6mm !important;
+  max-width: 8.6mm !important;
+  max-height: 8.6mm !important;
+  border-radius: 50% !important;
+  border: 0.6px solid #c49a45 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  background: #fff !important;
 }
 .label-header-logo {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
 }
 
 .label-header-center {
@@ -617,6 +626,31 @@
     border: 1.2px solid #0c2340 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  .label-logo-wrap {
+    width: 8.6mm !important;
+    height: 8.6mm !important;
+    min-width: 8.6mm !important;
+    min-height: 8.6mm !important;
+    max-width: 8.6mm !important;
+    max-height: 8.6mm !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .label-header-logo {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 100% !important;
+    min-height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
   }
 
   @page {

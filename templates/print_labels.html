@@ -104,11 +104,12 @@
 
         <!-- ① Header: IGI logo + institute name + security badge -->
         <div class="label-top-header">
-          <div class="label-logo-wrap">
-            <img src="/static/logo.jpeg"
+          <div class="label-logo-wrap" style="width: 8.6mm; height: 8.6mm; min-width: 8.6mm; min-height: 8.6mm; flex-shrink: 0;">
+            <img src="/static/logo_card_thumb.png"
                  alt="IGI"
                  class="label-header-logo"
-                 onerror="this.style.display='none'"/>
+                 style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                 onerror="this.src='/static/logo.jpeg'"/>
           </div>
           <div class="label-header-center">
             <div class="label-lab-name">INDIAN GEMOLOGICAL INSTITUTE</div>
@@ -134,7 +135,7 @@
           <div class="label-fields">
             <!-- Watermark -->
             <div class="card-watermark" aria-hidden="true">
-              <img src="/static/logo.jpeg" alt=""/>
+              <img src="/static/logo_card_thumb.png" alt="" onerror="this.src='/static/logo.jpeg'"/>
             </div>
 
             <div class="label-row zebra-0">
