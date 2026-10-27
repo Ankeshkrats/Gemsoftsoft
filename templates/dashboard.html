@@ -258,6 +258,15 @@
                     </svg>
                   </a>
 
+                  <!-- Update / Upload Photo -->
+                  <button onclick="openDashboardPhotoModal({{ cert.id }}, '{{ cert.report_number }}')" title="Change / Upload Photo"
+                    class="p-2 rounded-lg hover:bg-amber-50 text-amber-600 transition min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer" aria-label="Upload Photo">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                  </button>
+
                   <!-- Clone -->
                   {% if not cert.is_clone %}
                   <button onclick="openCloneModal({{ cert.id }})" title="Bulk Clone"
@@ -322,6 +331,98 @@
     </div>
   </div>
 
+  <!-- ── Dashboard Photo Upload Modal ── -->
+  <div id="dash-photo-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto p-5 animate-fade-in border border-gray-100">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+        <h3 class="font-bold text-base text-[#1e3a5f] flex items-center gap-2">
+          <span>📷</span> <span>Change Certificate Photo</span>
+        </h3>
+        <button type="button" onclick="closeDashboardPhotoModal()" class="text-gray-400 hover:text-gray-700 text-lg cursor-pointer">✕</button>
+      </div>
+
+      <div class="my-4">
+        <p class="text-xs text-gray-500 mb-3">Upload a new photo for <strong id="dash-modal-cert-rep" class="text-gray-700 font-mono"></strong>. It will be permanently stored and visible on all cards and PDF downloads.</p>
+        <input type="hidden" id="dash-modal-cert-id"/>
+        <label for="dash-modal-photo-file" class="border-2 border-dashed border-gray-300 hover:border-[#1e3a5f] rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition bg-slate-50 hover:bg-white text-center">
+          <svg class="h-10 w-10 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 16.5V18a2 2 0 002 2h14a2 2 0 002-2v-1.5M12 3v12m0-12L8.5 6.5M12 3l3.5 3.5"/>
+          </svg>
+          <span class="text-xs font-semibold text-gray-700" id="dash-photo-file-label">Click to select photo (JPEG, PNG, WEBP)</span>
+          <span class="text-[10px] text-gray-400 mt-1">Recommended clear specimen shot</span>
+          <input type="file" id="dash-modal-photo-file" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleDashPhotoSelected(this)"/>
+        </label>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+        <button type="button" onclick="closeDashboardPhotoModal()" class="px-3.5 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg transition cursor-pointer">
+          Cancel
+        </button>
+        <button type="button" id="dash-photo-submit-btn" onclick="submitDashboardPhoto()" disabled class="px-4 py-2 text-xs font-bold bg-[#1e3a5f] hover:bg-[#162c46] disabled:opacity-50 text-white rounded-lg transition flex items-center gap-1.5 cursor-pointer">
+          <span>Upload &amp; Save</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script src="/static/js/main.js"></script>
+  <script>
+    function openDashboardPhotoModal(certId, reportNum) {
+      document.getElementById('dash-modal-cert-id').value = certId;
+      document.getElementById('dash-modal-cert-rep').textContent = reportNum;
+      document.getElementById('dash-modal-photo-file').value = '';
+      document.getElementById('dash-photo-file-label').textContent = 'Click to select photo (JPEG, PNG, WEBP)';
+      document.getElementById('dash-photo-submit-btn').disabled = true;
+      document.getElementById('dash-photo-modal').classList.remove('hidden');
+    }
+
+    function closeDashboardPhotoModal() {
+      document.getElementById('dash-photo-modal').classList.add('hidden');
+    }
+
+    function handleDashPhotoSelected(input) {
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        document.getElementById('dash-photo-file-label').textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        document.getElementById('dash-photo-submit-btn').disabled = false;
+      }
+    }
+
+    async function submitDashboardPhoto() {
+      const certId = document.getElementById('dash-modal-cert-id').value;
+      const input = document.getElementById('dash-modal-photo-file');
+      if (!certId || !input.files || !input.files[0]) return;
+
+      const btn = document.getElementById('dash-photo-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Uploading...';
+
+      const formData = new FormData();
+      formData.append('image', input.files[0]);
+
+      try {
+        const res = await fetch(`/api/certificate/${certId}/update-image`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.error) {
+          alert('Upload failed: ' + data.error);
+          btn.disabled = false;
+          btn.textContent = 'Upload & Save';
+          return;
+        }
+        closeDashboardPhotoModal();
+        if (typeof showToast === 'function') {
+          showToast('Photo updated successfully!', 'success');
+        }
+        setTimeout(() => location.reload(), 800);
+      } catch (e) {
+        alert('Network error. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Upload & Save';
+      }
+    }
+  </script>
 </body>
 </html>

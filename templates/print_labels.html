@@ -195,7 +195,8 @@
             <div class="label-qr-wrap">
               {% if c.qr_code_path %}
               <img src="/static/uploads/qrcodes/{{ c.qr_code_path }}"
-                class="label-qr" alt="QR"/>
+                class="label-qr" alt="QR"
+                onerror="this.onerror=null; this.src='/static/uploads/qrcodes/{{ c.qr_code_path }}';"/>
               {% else %}
               <div class="label-qr bg-gray-100 flex items-center justify-center text-gray-400 font-bold text-xs rounded">QR</div>
               {% endif %}
@@ -207,13 +208,13 @@
             <div class="label-gem-wrap">
               {% if c.image_path %}
               <img src="/static/uploads/{{ c.image_path }}"
-                class="label-gem-img" alt="{{ c.gemstone_name }}"/>
-              {% else %}
-              <div class="label-gem-placeholder">
+                class="label-gem-img" alt="{{ c.gemstone_name }}"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"/>
+              {% endif %}
+              <div class="label-gem-placeholder" style="{% if c.image_path %}display:none;{% endif %}">
                 <span class="gem-symbol">◆</span>
                 <span class="gem-label">GEM PHOTO</span>
               </div>
-              {% endif %}
             </div>
 
             <div class="label-signature">

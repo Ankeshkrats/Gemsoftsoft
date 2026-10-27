@@ -49,8 +49,11 @@ def get_client():
             )
         _client = pymongo.MongoClient(
             uri,
-            serverSelectionTimeoutMS=8000,
-            connectTimeoutMS=8000
+            serverSelectionTimeoutMS=15000,
+            connectTimeoutMS=15000,
+            socketTimeoutMS=20000,
+            retryWrites=True,
+            maxPoolSize=20
         )
     return _client
 
@@ -236,15 +239,24 @@ def insert_certificate(cert_data: dict) -> int:
     db = get_db()
     doc = dict(cert_data)
 
-    # Strictly protect MongoDB Atlas space: ensure no binary or base64 image data is stored
+    # Strictly protect MongoDB Atlas space: ensure no binary or base64 image data is stored directly in certificate document
+    b64_img = None
     for prohibited in ['image_data', 'image_base64', 'image_binary', 'file_bytes']:
         if prohibited in doc:
+            if not b64_img and doc[prohibited]:
+                b64_img = doc[prohibited]
             del doc[prohibited]
     
     # If image_path is suspiciously large (e.g. accidentally passed base64), clean it
     img_path = doc.get('image_path')
     if isinstance(img_path, str) and (img_path.startswith('data:image') or len(img_path) > 255):
         doc['image_path'] = ''
+
+    if b64_img and doc.get('image_path'):
+        try:
+            save_image_record(doc['image_path'], b64_img)
+        except Exception:
+            pass
 
     while True:
         try:
@@ -257,6 +269,68 @@ def insert_certificate(cert_data: dict) -> int:
             max_doc = db.certificates.find_one(sort=[('id', -1)])
             highest_id = int(max_doc.get('id', 0)) if max_doc else 0
             db.counters.update_one({'_id': 'certificates'}, {'$set': {'seq': highest_id}}, upsert=True)
+
+
+def save_image_record(filename: str, b64_data: str, content_type: str = 'image/jpeg') -> bool:
+    """Permanently persist an uploaded image in MongoDB Atlas so Render redeploys cannot delete it."""
+    if not filename or not b64_data:
+        return False
+    try:
+        db = get_db()
+        db.certificate_images.update_one(
+            {'filename': filename},
+            {'$set': {
+                'filename': filename,
+                'data': b64_data,
+                'content_type': content_type,
+                'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }},
+            upsert=True
+        )
+        return True
+    except Exception as e:
+        print(f"Error saving image record to MongoDB: {e}")
+        return False
+
+
+def get_image_by_filename(filename: str):
+    """Retrieve persisted image data from MongoDB Atlas."""
+    if not filename:
+        return None
+    try:
+        db = get_db()
+        return db.certificate_images.find_one({'filename': filename})
+    except Exception as e:
+        print(f"Error getting image record from MongoDB: {e}")
+        return None
+
+
+def update_certificate_image(cert_id: int, image_path: str) -> bool:
+    """Update image path for an existing certificate."""
+    db = get_db()
+    res = db.certificates.update_one(
+        {'id': int(cert_id)},
+        {'$set': {'image_path': image_path}}
+    )
+    return res.matched_count > 0
+
+
+def get_certificate_by_qr_path(qr_code_path: str):
+    """Find certificate matching a QR filename or report number."""
+    if not qr_code_path:
+        return None
+    db = get_db()
+    # 1. Match exact qr_code_path
+    doc = db.certificates.find_one({'qr_code_path': qr_code_path})
+    if doc:
+        return serialize_doc(doc)
+    # 2. Match report_number parsed from qr_code_path (e.g. IGI_2026_04332_qr.png -> IGI-2026-04332)
+    base = os.path.basename(qr_code_path)
+    clean_rep = re.sub(r'_qr\.(png|jpg|jpeg)$', '', base, flags=re.I).replace('_', '-')
+    doc = db.certificates.find_one({
+        'report_number': {'$regex': f"^{re.escape(clean_rep)}$", '$options': 'i'}
+    })
+    return serialize_doc(doc) if doc else None
 
 
 def update_certificate_qr(cert_id: int, qr_code_path: str, qr_payload: str) -> bool:

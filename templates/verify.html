@@ -157,17 +157,18 @@
           <!-- Product Image & QR Preview -->
           <div class="w-full flex flex-col sm:flex-row md:flex-col items-center justify-center gap-4 bg-slate-50 rounded-xl p-4 border border-slate-200">
             {% if cert.image_path %}
-            <img src="/static/uploads/{{ cert.image_path }}" class="w-36 h-36 sm:w-40 sm:h-40 object-cover rounded-xl border-2 border-white shadow-md" alt="Gemstone Image">
-            {% else %}
-            <div class="w-32 h-32 sm:w-36 sm:h-36 rounded-xl bg-blue-50 border-2 border-dashed border-blue-200 flex flex-col items-center justify-center text-blue-500 shadow-inner">
+            <img src="/static/uploads/{{ cert.image_path }}" class="w-36 h-36 sm:w-40 sm:h-40 object-cover rounded-xl border-2 border-white shadow-md" alt="Gemstone Image"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            {% endif %}
+            <div class="w-32 h-32 sm:w-36 sm:h-36 rounded-xl bg-blue-50 border-2 border-dashed border-blue-200 flex flex-col items-center justify-center text-blue-500 shadow-inner" style="{% if cert.image_path %}display:none;{% endif %}">
               <span class="text-4xl">💎</span>
               <span class="text-xs font-medium mt-1">Certified Specimen</span>
             </div>
-            {% endif %}
 
             {% if cert.qr_code_path %}
             <div class="text-center">
-              <img src="/static/uploads/qrcodes/{{ cert.qr_code_path }}" class="w-24 h-24 p-1 bg-white border border-gray-200 rounded-lg shadow-sm mx-auto" alt="Verified QR Code">
+              <img src="/static/uploads/qrcodes/{{ cert.qr_code_path }}" class="w-24 h-24 p-1 bg-white border border-gray-200 rounded-lg shadow-sm mx-auto" alt="Verified QR Code"
+                onerror="this.onerror=null; this.src='/static/uploads/qrcodes/{{ cert.qr_code_path }}';">
               <span class="text-[10px] text-gray-400 font-mono mt-1 block">{{ cert.report_number }}</span>
             </div>
             {% endif %}

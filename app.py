@@ -13,10 +13,12 @@ import sqlite3
 import string
 from datetime import datetime
 from functools import wraps
+import threading
 
 from flask import (
     Flask, g, flash, jsonify, redirect,
-    render_template, request, session, url_for, send_file
+    render_template, request, session, url_for, send_file,
+    send_from_directory, abort
 )
 from io import BytesIO
 import card_pdf
@@ -206,10 +208,19 @@ def generate_qr(cert_data: dict, filename: str, base_url: str = None) -> tuple[s
     the user immediately sees the certificate details upon tap.
     Also computes and stores the Ed25519 digital signature for cryptographic verification.
     """
+    verify_url = None
     if not base_url:
-        base_url = get_public_base_url()
-
-    verify_url = f"{base_url}/verify?report={cert_data['report_number']}&pin={cert_data['secret_pin']}"
+        if cert_data.get('qr_payload'):
+            try:
+                p = json.loads(cert_data['qr_payload'])
+                verify_url = p.get('verify_url')
+            except Exception:
+                verify_url = None
+        if not verify_url:
+            base_url = get_public_base_url()
+            verify_url = f"{base_url}/verify?report={cert_data.get('report_number','')}&pin={cert_data.get('secret_pin','')}"
+    else:
+        verify_url = f"{base_url}/verify?report={cert_data.get('report_number','')}&pin={cert_data.get('secret_pin','')}"
 
     payload = build_qr_payload(cert_data)
     signature = sign_payload(payload)
@@ -230,6 +241,7 @@ def generate_qr(cert_data: dict, filename: str, base_url: str = None) -> tuple[s
 
     img  = qr.make_image(fill_color="black", back_color="white")
     path = os.path.join(QR_FOLDER, filename)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     img.save(path)
     return filename, qr_json
 
@@ -237,11 +249,12 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTS
 
 def save_image(file_obj):
-    """Save uploaded image + create thumbnail. Returns relative path."""
-    ext      = file_obj.filename.rsplit('.', 1)[1].lower()
+    """Save uploaded image + create thumbnail. Returns relative path and persists in MongoDB Atlas."""
+    ext      = file_obj.filename.rsplit('.', 1)[1].lower() if (file_obj.filename and '.' in file_obj.filename) else 'jpg'
     unique   = ''.join(random.choices(string.ascii_lowercase + string.digits, k=12))
     filename = f"{unique}.{ext}"
     path     = os.path.join(UPLOAD_FOLDER, filename)
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
     img = Image.open(file_obj)
     img = img.convert('RGB')
@@ -252,9 +265,103 @@ def save_image(file_obj):
     top     = (img.height - min_dim) // 2
     img     = img.crop((left, top, left + min_dim, top + min_dim))
     img     = img.resize((800, 800), Image.LANCZOS)
-    img.save(path, quality=90, optimize=True)
+    img.save(path, quality=88, optimize=True)
+
+    # Persist directly into MongoDB Atlas so Render redeploys NEVER lose the image!
+    try:
+        with open(path, 'rb') as f:
+            b64_data = base64.b64encode(f.read()).decode('utf-8')
+            mime = f"image/{'jpeg' if ext in ['jpg', 'jpeg'] else ext}"
+            db_mongo.save_image_record(filename, b64_data, mime)
+    except Exception as e:
+        app.logger.warning(f"Could not persist image {filename} to MongoDB: {e}")
 
     return filename
+
+def ensure_qr_code(cert: dict, base_dir: str = None) -> str:
+    """Ensure the QR code PNG exists on disk for the given certificate. Regenerates if missing."""
+    if not cert:
+        return ''
+    qr_folder = os.path.join(base_dir, 'static', 'uploads', 'qrcodes') if base_dir else QR_FOLDER
+    os.makedirs(qr_folder, exist_ok=True)
+
+    qr_filename = cert.get('qr_code_path')
+    if not qr_filename:
+        rn = cert.get('report_number', '')
+        qr_filename = f"{rn.replace('-', '_')}_qr.png"
+        cert['qr_code_path'] = qr_filename
+
+    qr_path = os.path.join(qr_folder, qr_filename)
+    if not os.path.exists(qr_path):
+        try:
+            generate_qr(cert, qr_filename)
+        except Exception as e:
+            app.logger.error(f"Error auto-generating QR code {qr_filename}: {e}")
+    return qr_filename
+
+def ensure_image_file(image_filename: str, base_dir: str = None) -> bool:
+    """Ensure gemstone image exists on disk, restoring from MongoDB Atlas if missing."""
+    if not image_filename:
+        return False
+    upload_folder = os.path.join(base_dir, 'static', 'uploads') if base_dir else UPLOAD_FOLDER
+    file_path = os.path.join(upload_folder, image_filename)
+    if os.path.exists(file_path):
+        return True
+
+    # Attempt to restore from MongoDB Atlas
+    try:
+        doc = db_mongo.get_image_by_filename(image_filename)
+        if doc and doc.get('data'):
+            os.makedirs(upload_folder, exist_ok=True)
+            raw = base64.b64decode(doc['data'])
+            with open(file_path, 'wb') as f:
+                f.write(raw)
+            return True
+    except Exception as e:
+        app.logger.warning(f"Failed to restore image {image_filename} from MongoDB: {e}")
+    return False
+
+def ensure_all_qr_codes():
+    """Scan all certificates in database and pre-generate missing QR codes."""
+    try:
+        certs = db_mongo.get_all_certificates()
+        count = 0
+        for c in certs:
+            fname = c.get('qr_code_path') or f"{c.get('report_number', '').replace('-', '_')}_qr.png"
+            path = os.path.join(QR_FOLDER, fname)
+            if not os.path.exists(path):
+                ensure_qr_code(c)
+                count += 1
+        if count > 0:
+            app.logger.info(f"Auto-generated {count} missing QR codes.")
+    except Exception as e:
+        app.logger.warning(f"Could not pre-generate QR codes on startup: {e}")
+
+# Launch background thread to heal any missing QR codes on boot
+threading.Thread(target=ensure_all_qr_codes, daemon=True).start()
+
+# ── Dynamic Media Serving with Auto-Heal ─────────────────────────────────────
+@app.route('/static/uploads/qrcodes/<path:filename>')
+def serve_qr_image(filename):
+    file_path = os.path.join(QR_FOLDER, filename)
+    if not os.path.exists(file_path):
+        cert = db_mongo.get_certificate_by_qr_path(filename)
+        if cert:
+            ensure_qr_code(cert)
+    if os.path.exists(file_path):
+        return send_from_directory(QR_FOLDER, filename)
+    abort(404)
+
+@app.route('/static/uploads/<path:filename>')
+def serve_upload_image(filename):
+    if filename.startswith('qrcodes/'):
+        return serve_qr_image(filename.replace('qrcodes/', '', 1))
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    if not os.path.exists(file_path):
+        ensure_image_file(filename)
+    if os.path.exists(file_path):
+        return send_from_directory(UPLOAD_FOLDER, filename)
+    abort(404)
 
 
 # ── Auth Routes ───────────────────────────────────────────────────────────────
@@ -513,6 +620,9 @@ def view_certificate(cert_id):
     if not cert:
         flash('Certificate not found.', 'error')
         return redirect(url_for('dashboard'))
+    ensure_qr_code(cert)
+    if cert.get('image_path'):
+        ensure_image_file(cert['image_path'])
     return render_template('certificate.html', cert=cert, institute=INSTITUTE_NAME,
                            institute_website=INSTITUTE_WEBSITE, institute_email=INSTITUTE_EMAIL)
 
@@ -621,6 +731,11 @@ def print_labels(cert_id):
     else:
         certs = [cert]
 
+    for c in certs:
+        ensure_qr_code(c)
+        if c.get('image_path'):
+            ensure_image_file(c['image_path'])
+
     return render_template('print_labels.html', cert=cert, certs=certs,
                            cert_ids_str=str(cert_id), is_merged=False,
                            institute=INSTITUTE_NAME,
@@ -635,6 +750,10 @@ def download_card_pdf(cert_id):
     if not cert:
         flash('Certificate not found.', 'error')
         return redirect(url_for('dashboard'))
+
+    ensure_qr_code(cert, base_dir=BASE_DIR)
+    if cert.get('image_path'):
+        ensure_image_file(cert['image_path'], base_dir=BASE_DIR)
 
     buf = BytesIO()
     gemologist = session.get('full_name') or 'Gemologist'
@@ -675,6 +794,9 @@ def merge_labels():
     for cid in id_list:
         c = db_mongo.get_certificate_by_id(cid)
         if c:
+            ensure_qr_code(c)
+            if c.get('image_path'):
+                ensure_image_file(c['image_path'])
             certs.append(c)
 
     if not certs:
@@ -714,6 +836,9 @@ def download_merged_cards_pdf():
     for cid in id_list:
         c = db_mongo.get_certificate_by_id(cid)
         if c:
+            ensure_qr_code(c, base_dir=BASE_DIR)
+            if c.get('image_path'):
+                ensure_image_file(c['image_path'], base_dir=BASE_DIR)
             certs.append(c)
 
     if not certs:
@@ -871,6 +996,36 @@ def upload_image():
         return jsonify({'error': f'Upload failed: {str(e)}'}), 500
 
 
+# ── API: Update Photo for Existing Certificate ───────────────────────────────
+@app.route('/api/certificate/<int:cert_id>/update-image', methods=['POST'])
+@login_required
+@csrf.exempt
+def api_update_certificate_image(cert_id):
+    cert = db_mongo.get_certificate_by_id(cert_id)
+    if not cert:
+        return jsonify({'error': 'Certificate not found'}), 404
+
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image file uploaded'}), 400
+    file = request.files['image']
+    if not file or file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    if not allowed_file(file.filename):
+        return jsonify({'error': 'Only JPEG, PNG, or WEBP files are accepted'}), 400
+
+    try:
+        filename = save_image(file)
+        db_mongo.update_certificate_image(cert_id, filename)
+        return jsonify({
+            'success': True,
+            'image_path': filename,
+            'thumbnail_url': f'/static/uploads/{filename}',
+            'message': f"Photo updated for report {cert.get('report_number')}"
+        })
+    except Exception as e:
+        return jsonify({'error': f'Failed to update image: {str(e)}'}), 500
+
+
 # ── Public Verify: Page ───────────────────────────────────────────────────────
 @app.route('/verify')
 def verify_page():
@@ -879,6 +1034,10 @@ def verify_page():
     cert = None
     if report_number:
         cert = db_mongo.verify_certificate_record(report_number, secret_pin if secret_pin else None)
+        if cert:
+            ensure_qr_code(cert)
+            if cert.get('image_path'):
+                ensure_image_file(cert['image_path'])
 
     return render_template('verify.html',
                            institute=INSTITUTE_NAME,
@@ -901,6 +1060,10 @@ def api_verify():
     cert = db_mongo.verify_certificate_record(report_number, secret_pin if secret_pin else None)
     if not cert:
         return jsonify({'error': 'Certificate not found or PIN incorrect'}), 404
+
+    ensure_qr_code(cert)
+    if cert.get('image_path'):
+        ensure_image_file(cert['image_path'])
 
     image_url = f'/static/uploads/{cert["image_path"]}' if cert.get('image_path') else None
     qr_url    = f'/static/uploads/qrcodes/{cert["qr_code_path"]}' if cert.get('qr_code_path') else None

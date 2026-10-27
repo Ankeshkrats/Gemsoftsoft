@@ -6,7 +6,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 
-BASE_DIR = r"C:\Users\LENOVO\Desktop\Gemsoftsoft"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CARD_WIDTH  = 85.6 * mm
 CARD_HEIGHT = 54.0 * mm
 
@@ -235,8 +235,17 @@ def draw_card(c: canvas.Canvas, x: float, y: float, cert: dict, base_dir: str = 
 
     qr_file = cert.get('qr_code_path')
     qr_drawn = False
-    if qr_file:
+    if qr_file or cert.get('report_number'):
+        if not qr_file:
+            qr_file = f"{cert.get('report_number', '').replace('-', '_')}_qr.png"
+            cert['qr_code_path'] = qr_file
         qr_full = os.path.join(base_dir, 'static', 'uploads', 'qrcodes', qr_file)
+        if not os.path.exists(qr_full):
+            try:
+                import app as flask_app
+                flask_app.ensure_qr_code(cert, base_dir=base_dir)
+            except Exception:
+                pass
         if os.path.exists(qr_full):
             try:
                 c.drawImage(qr_full, qr_x, qr_y,
@@ -275,6 +284,12 @@ def draw_card(c: canvas.Canvas, x: float, y: float, cert: dict, base_dir: str = 
     img_drawn = False
     if img_file:
         img_full = os.path.join(base_dir, 'static', 'uploads', img_file)
+        if not os.path.exists(img_full):
+            try:
+                import app as flask_app
+                flask_app.ensure_image_file(img_file, base_dir=base_dir)
+            except Exception:
+                pass
         if os.path.exists(img_full):
             try:
                 c.drawImage(img_full, gem_box_x, gem_box_y,

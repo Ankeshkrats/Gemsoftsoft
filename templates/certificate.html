@@ -20,6 +20,10 @@
       <span class="text-[#c9a84c] font-mono font-medium">{{ cert.report_number }}</span>
     </div>
     <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+      <button onclick="openUploadPhotoModal()"
+        class="flex-1 sm:flex-initial text-center text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-2 rounded-lg font-bold transition shadow-sm min-h-[38px] flex items-center justify-center gap-1.5 cursor-pointer">
+        📷 Upload Photo
+      </button>
       <a href="/labels/{{ cert.id }}/pdf"
         class="flex-1 sm:flex-initial text-center text-xs sm:text-sm bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded-lg font-bold transition shadow-sm min-h-[38px] flex items-center justify-center gap-1.5">
         📥 Save Card PDF
@@ -69,7 +73,8 @@
                 <img src="/static/uploads/qrcodes/{{ cert.qr_code_path }}"
                   class="cert-header-qr"
                   style="width:56px;height:56px;background:white;padding:3px;border-radius:4px;"
-                  alt="Signed QR Code"/>
+                  alt="Signed QR Code"
+                  onerror="this.onerror=null; this.src='/static/uploads/qrcodes/{{ cert.qr_code_path }}';"/>
                 <span style="font-size:6pt;color:#c9a84c;letter-spacing:0.5px;">🔏 DIGITALLY SIGNED</span>
               {% endif %}
             </div>
@@ -101,15 +106,22 @@
             <div class="cert-gem-img-wrap">
               {% if cert.image_path %}
                 <img src="/static/uploads/{{ cert.image_path }}"
+                  id="cert-gem-img-el"
                   class="cert-gem-img"
-                  alt="{{ cert.gemstone_name }}"/>
-              {% else %}
-                <div class="cert-img-placeholder">
-                  💎
-                </div>
+                  alt="{{ cert.gemstone_name }}"
+                  onerror="this.style.display='none'; document.getElementById('cert-gem-placeholder-el').style.display='flex';"/>
               {% endif %}
+              <div id="cert-gem-placeholder-el" class="cert-img-placeholder" style="{% if cert.image_path %}display:none;{% endif %}">
+                💎
+              </div>
               <div style="text-align:center;margin-top:2mm;font-size:8pt;color:#64748b;font-style:italic;">
                 {{ cert.gemstone_name }}
+              </div>
+              <!-- Upload / Change Photo button (Hidden when printing) -->
+              <div class="no-print text-center mt-2">
+                <button type="button" onclick="openUploadPhotoModal()" class="text-[11px] font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-md transition shadow-xs inline-flex items-center gap-1 mx-auto cursor-pointer">
+                  <span>📷</span> <span>Change Photo</span>
+                </button>
               </div>
             </div>
 
@@ -169,10 +181,96 @@
     </div><!-- cert-screen-wrapper -->
   </div><!-- print-area -->
 
+  <!-- Photo Upload Modal -->
+  <div id="photo-upload-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm" style="display:none;">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-100 animate-fade-in p-5">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+        <h3 class="font-bold text-base text-[#1e3a5f] flex items-center gap-2">
+          <span>📷</span> <span>Update Gemstone Photo</span>
+        </h3>
+        <button type="button" onclick="closeUploadPhotoModal()" class="text-gray-400 hover:text-gray-700 text-lg cursor-pointer">✕</button>
+      </div>
+
+      <div class="my-4">
+        <p class="text-xs text-gray-500 mb-3">Upload a new photo for Report <strong class="text-gray-700 font-mono">{{ cert.report_number }}</strong>. It will be permanently saved and visible across all cards and prints.</p>
+        
+        <label for="modal-photo-file" class="border-2 border-dashed border-gray-300 hover:border-[#1e3a5f] rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition bg-slate-50 hover:bg-white text-center">
+          <svg class="h-10 w-10 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 16.5V18a2 2 0 002 2h14a2 2 0 002-2v-1.5M12 3v12m0-12L8.5 6.5M12 3l3.5 3.5"/>
+          </svg>
+          <span class="text-xs font-semibold text-gray-700" id="photo-file-label">Click to select photo (JPEG, PNG, WEBP)</span>
+          <span class="text-[10px] text-gray-400 mt-1">Recommended square / clear gemstone shot</span>
+          <input type="file" id="modal-photo-file" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleModalPhotoSelected(this)"/>
+        </label>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+        <button type="button" onclick="closeUploadPhotoModal()" class="px-3.5 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg transition cursor-pointer">
+          Cancel
+        </button>
+        <button type="button" id="upload-photo-submit-btn" onclick="submitCertificatePhoto()" disabled class="px-4 py-2 text-xs font-bold bg-[#1e3a5f] hover:bg-[#162c46] disabled:opacity-50 text-white rounded-lg transition flex items-center gap-1.5 cursor-pointer">
+          <span>Upload &amp; Save</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Auto-print if ?print=1 in URL
     if (new URLSearchParams(window.location.search).get('print') === '1') {
       window.addEventListener('load', () => setTimeout(() => window.print(), 400));
+    }
+
+    function openUploadPhotoModal() {
+      document.getElementById('photo-upload-modal').style.display = 'flex';
+      document.getElementById('modal-photo-file').value = '';
+      document.getElementById('photo-file-label').textContent = 'Click to select photo (JPEG, PNG, WEBP)';
+      document.getElementById('upload-photo-submit-btn').disabled = true;
+    }
+
+    function closeUploadPhotoModal() {
+      document.getElementById('photo-upload-modal').style.display = 'none';
+    }
+
+    function handleModalPhotoSelected(input) {
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        document.getElementById('photo-file-label').textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        document.getElementById('upload-photo-submit-btn').disabled = false;
+      }
+    }
+
+    async function submitCertificatePhoto() {
+      const input = document.getElementById('modal-photo-file');
+      if (!input.files || !input.files[0]) return;
+
+      const btn = document.getElementById('upload-photo-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Uploading...';
+
+      const formData = new FormData();
+      formData.append('image', input.files[0]);
+
+      try {
+        const res = await fetch('/api/certificate/{{ cert.id }}/update-image', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.error) {
+          alert('Upload failed: ' + data.error);
+          btn.disabled = false;
+          btn.textContent = 'Upload & Save';
+          return;
+        }
+        closeUploadPhotoModal();
+        // Immediately reload or update photo element
+        location.reload();
+      } catch (e) {
+        alert('Network error. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Upload & Save';
+      }
     }
   </script>
 </body>
